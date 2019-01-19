@@ -6,9 +6,27 @@ Created on Sat Jan 19 11:12:27 2019
 """
 from scipy import ndimage
 import numpy as np
+from skimage.transform import rotate
+import math
 
 
 #Fonctions génerales
+
+def gradlap():
+    kx=np.zeros((3,3))
+    kx[1][0],kx[1][2]=1,-1
+    ky=np.transpose(kx)
+    klap=np.ones((3,3))
+    klap[1][1]=-8
+    return(kx,ky,klap)
+    
+def gaussianKernel(hs,sig):
+    kernel=np.zeros((2*hs+1 ,2*hs+1))
+    for n in range(2*hs+1):
+        for p in range(2*hs+1):
+            kernel[n][p]=math.exp(-((n-hs)**2+(p-hs)**2)/2/sig**2)
+    
+    return kernel / np.sum(kernel)
 
 def rotation(im): #prend une image en argument, et la ressort pivotée dans le bon sens
     [n,p]=np.shape(im)
