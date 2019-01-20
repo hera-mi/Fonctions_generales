@@ -96,4 +96,4 @@ def lowpass_filter(im, Dc, option=True): #filtre passe bas de fréaquence de cou
                 if (k-n/2)**2+(l-p/2)**2 > Dc**2:
                     fftcenter[k,l]=0+0*1j
                 
-    return(fftcenter)
+    return(fftcenter) #
