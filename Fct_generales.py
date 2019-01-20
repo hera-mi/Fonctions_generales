@@ -46,3 +46,54 @@ def isoler(im,X,Y) : #Renvoie la zone de l'image correspondant aux pixels entre 
     [x1,x2]=[int(n*px1),int(n*px2)]
     [y1,y2]=[int(p*py1),int(p*py2)]
     return(im[x1:x2,y1:y2])
+    
+def linear (source, a, b): #entrée: image 2D, sortie: image ou les pixels d'intensité x prennent la valeur ax+b
+    taille=np.shape(source)
+    I=np.zeros_like(source)
+    for k in range(taille[0]):
+        for l in range(taille[1]):
+            I[k][l]=a*source[k][l]+b
+#            if I[k][l]>10000:
+#                I[k][l]=10000
+#            elif I[k][l]<0:
+#                I[k][l]=0
+    return(I)
+
+
+def highpass_filter(im, Dc, option=True): #filtre passe haut de fréaquence de coupure Dc, gaussiien si option=true
+    
+    dim=np.shape(im)
+    n=dim[0]
+    p=dim[1]
+    fft=np.fft.fft2(im)
+    fftcenter=np.fft.fftshift(fft)
+    
+    for k in range(n):
+        for l in range(p):
+            if option:
+                D2=(k-n/2)**2+(l-p/2)**2
+                fftcenter[k,l]=fftcenter[k,l]*(1-np.exp(-D2/(2*Dc**2)))
+                
+            else:
+                if (k-n/2)**2+(l-p/2)**2 < Dc**2:
+                    fftcenter[k,l]=0+0*1j
+    return(fftcenter)
+
+def lowpass_filter(im, Dc, option=True): #filtre passe bas de fréaquence de coupure Dc, gaussiien si option=true
+    
+    dim=np.shape(im)
+    n=dim[0]
+    p=dim[1]
+    fft=np.fft.fft2(im)
+    fftcenter=np.fft.fftshift(fft)
+    
+    for k in range(n):
+        for l in range(p):
+            if option:
+                D2=(k-n/2)**2+(l-p/2)**2
+                fftcenter[k,l]=fftcenter[k,l]*np.exp(-D2/(2*Dc**2))
+            else:
+                if (k-n/2)**2+(l-p/2)**2 > Dc**2:
+                    fftcenter[k,l]=0+0*1j
+                
+    return(fftcenter)
