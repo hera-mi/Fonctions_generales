@@ -63,7 +63,7 @@ s = np.linspace(0, 2*np.pi, 400)
 x = 280 + 50*np.cos(s)
 y = 500 + 50*np.sin(s)
 init = np.array([x, y]).T
-
+"""
 snake = active_contour(massesbis_l,init, alpha=0.015, beta=10, gamma=0.001)
 fig, ax = plt.subplots(figsize=(7, 7))
 ax.imshow(massesbis_l, cmap=plt.cm.gray)
@@ -71,7 +71,7 @@ ax.plot(init[:, 0], init[:, 1], '--r', lw=3)
 ax.plot(snake[:, 0], snake[:, 1], '-b', lw=3)
 ax.set_xticks([]), ax.set_yticks([])
 ax.axis([0, masses.shape[1], masses.shape[0], 0])
-
+"""
 from skimage import img_as_ubyte
 cv_image = img_as_ubyte(masses)
 #np.uint8(masses)
@@ -89,7 +89,9 @@ def trouver_masses(im):
     imb, contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE) 
     fig, ax = plt.subplots(figsize=(7, 7))
     ax.imshow(imb, cmap=plt.cm.gray)
-    #ax.plot(contours[:, 0], contours[:, 1], '-b', lw=3)
+    for i in contours:
+        if np.shape(i)[0]>100 : #on ne garde que les formes significatives
+            ax.plot(i[:,0 ,0], i[:,0, 1], '-b', lw=3)
     return(imb,contours)
 #https://stackoverrun.com/fr/q/11610670    
     
@@ -101,8 +103,8 @@ massesbis=isoler(rotation(imbis),[0.3,0.48],[0.01,0.36])
 massesbis_l=ndimage.convolve(massesbis,gaussianKernel(10,7))
 
 s = np.linspace(0, 2*np.pi, 400)
-xb = 190 + 50*np.cos(s)
-yb = 220 + 50*np.sin(s)
+xb = 370 + 50*np.cos(s)
+yb = 420 + 50*np.sin(s)
 initb = np.array([xb, yb]).T
 
 snake = active_contour(massesbis_l,initb, alpha=0.015, beta=10, gamma=0.001)
@@ -112,3 +114,38 @@ ax.plot(initb[:, 0], initb[:, 1], '--r', lw=3)
 ax.plot(snake[:, 0], snake[:, 1], '-b', lw=3)
 ax.set_xticks([]), ax.set_yticks([])
 ax.axis([0, massesbis.shape[1], massesbis.shape[0], 0])
+
+#plt.plot(c[501][:,0,0],c[501][:,0,1])
+#skimage.measure.find_contours(massesbis,100,fully_connected='low', positive_orientation='high')
+#
+def moyenne(im,pos,pas):#effectue la moyenn autour d'une position (peut sûrement être remplacer par de la convolution locale)
+    m=0
+    [x,y]=pos
+    for n in range(2*pas+1):
+        for p in range(2*pas+1):
+            m+=im[x+n-pas,y+p-pas]
+    m=m/(2*pas+1)**2
+    return(m)
+    
+
+def trouver_zone(im,pas,valeur,sig=1): #peut être faut-il differencier le pas de la taille du noyau
+   # filtre=gaussianKernel(pas,sig)
+    [n,p]=np.shape(im)
+    print(n,p)
+    x,y=pas+1,pas+1
+    lieux_x,lieux_y=[],[]
+    while x< (n-pas):
+        y=0
+        while y<(p-pas):
+            if moyenne(im,[x,y],pas)>(valeur/256): #attention à vérifier si les valeurs vont de 0 à1 ou de 0 à 255
+                lieux_x+=[x]
+                lieux_y+=[y]
+            y+=pas
+        x+=pas
+    fig, ax = plt.subplots(figsize=(7, 7))
+    ax.imshow(im, cmap=plt.cm.gray)
+    ax.plot(lieux_y, lieux_x, 'bo')#, lw=3)#marche pas car lieux est une liste, pas un array
+    return(lieux_x,lieux_y) #y correspond aux colonnes et x aux lignes
+            
+            
+            
