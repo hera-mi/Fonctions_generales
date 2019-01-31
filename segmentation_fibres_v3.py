@@ -3,6 +3,15 @@
 Created on Thu Jan 31 21:44:15 2019
 
 @author: Gauthier Frecon
+
+
+script à appliquer à partir des zones des fibres inversées et égalisées:
+    
+-filtrage passe haut pour enlever le gradient
+-corrélation des deux mask
+-OU logique
+-pas besoin de faire d'étiquettage
+
 """
 from skimage.exposure import equalize_adapthist
 

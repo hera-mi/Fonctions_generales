@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*-
 """
-Éditeur de Spyder
+Gauthier
 
-Ceci est un script temporaire.
+-isolement de la zone fibre
+-isolement de F1 et isolement de F1
+-inversion des pixels pour avoir les fibres en blanc et le fond en noir
+-égalisation des histogrammes
+
 """
 import os
 import numpy as np
