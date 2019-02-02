@@ -85,5 +85,5 @@ plt.imshow(invfft_highpass, cmap='gray')
 plt.show()
 
 im_highpass=invfft_highpass /10000
-im_corr_I1=correlation_mask_I(im_highpass,3,40, seuil=6, angle=45) 
+im_corr_I1=correlation_mask_I(im_highpass,3,40, seuil=5, angle=45) 
 
