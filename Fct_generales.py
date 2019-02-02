@@ -101,4 +101,6 @@ def lowpass_filter(im, Dc, option=True): #filtre passe bas de fréaquence de cou
 def meanKernel(hs):
     kernel = 1/np.power((2*hs+1),2) * np.ones([2*hs+1,2*hs+1])
     return kernel
+ 
+    
 
