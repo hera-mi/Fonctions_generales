@@ -10,6 +10,8 @@ script indépendant pour analyser la base de données
 
 @author: Gauthier Frecon
 """
+
+plt.close ('all')
 import os
 import numpy as np
 import matplotlib.pyplot as plt
@@ -27,8 +29,10 @@ d_planmed={}
 d_planmed['im']=[]
 d_planmed['taille']=[] #taille du pixel array
 d_planmed['date']=[] #date de création
-d_planmed['Lx']=[] #taille du sein selon x
-d_planmed['Ly']=[] #taille du sein selon y
+d_planmed['pos_y']=[] ##position de la position du sein selon y, le sein est entre les lignes de pos_y
+d_planmed['pos_x']=[] #position de la position du sein selon x, le sein est de la colonne x à taille[1]  
+d_planmed['moyenne_mat_blanc']=[] #moyenne des pixels graisse et glande
+d_planmed['moyenne_mat_noir']=[]
 for root, dirnames, filenames in os.walk(IMDIR_planmed):
     for filename in filenames:
         f = os.path.join(root, filename)
@@ -36,31 +40,47 @@ for root, dirnames, filenames in os.walk(IMDIR_planmed):
         if f.endswith(('.dcm')) and not root.endswith('__MACOSX'):  
             ds = pydicom.dcmread(f)
             im=ds.pixel_array
-            [n,p]=np.shape(im)
-            d_planmed['im'].append(im)
-            taille=np.shape(ds.pixel_array)
-            d_planmed['taille'].append(taille)
-            d_planmed['date'].append(ds.ContentDate)
-            #détection de la taile du sein selon x (vertical)
-            x_haut=0
-            while im[x_haut,taille[1]-1]==10000 and im[n//2,1]==10000: #on ne prend pas les images retourner car la fonction rotation change le tableau
-                x_haut+=1
-            x_bas=1
-            while im[taille[0]-x_bas,taille[1]-1]==10000 and im[n//2,1]==1000: #on ne prend pas les images retourner car la fonction rotation change le tableau
-                x_bas+=1
-            Lx=taille[0]-x_bas-x_haut
-            d_planmed['Lx'].append(Lx)
+            im_red=redim_im(im) 
+            d_planmed['im'].append( im_red)      
+            [n,p]=np.shape(im_red)
+            d_planmed['taille'].append([n,p])
+            d_planmed['date'].append(ds.ContentDate)  
+
             
-            #détection de la taile du sein selon x (vertical)
-            y=0
-            while im[n//2,y]==10000 and im[n//2,1]==10000: #on ne prend pas les images retourner car la fonction rotation change le tableau
-                y+=1
-
-            Ly=taille[1]-y
-            d_planmed['Ly'].append(Ly)            
-                
-                
-
+            #calcul valeurs moyennes glande et graisse
+            #partie pour trouver les carrés blancs et noi, peut-etre à modifier en pondérant par les tailles des images. 
+            
+            #m=(pos_y[0]+n-pos_y[1])//2
+#            x_bas=pos_x[0]+525
+#            x_haut=pos_x[0]+575
+#            y_matblanc_bas=m-30
+#            y_matblanc_haut=m+30
+#            y_matnoir_bas=m+125-30
+#            y_matnoir_haut=m+125+30
+            
+            #a faire fonction redimension et calcul des zones par proportion
+            
+            m=n//2
+            x_bas=525
+            x_haut=575
+            y_matblanc_bas=m-30
+            y_matblanc_haut=m+30
+            y_matnoir_bas=m+125-30
+            y_matnoir_haut=m+125+30
+            
+            
+            
+            moyenne_matblanc=np.mean(im_red[y_matblanc_bas: y_matblanc_haut, x_bas:x_haut])
+            moyenne_matnoir=np.mean(im_red[y_matnoir_bas: y_matnoir_haut, x_bas:x_haut])              
+            d_planmed['moyenne_mat_blanc'].append(moyenne_matblanc)
+            d_planmed['moyenne_mat_noir'].append(moyenne_matnoir)
+            plt.imshow(im_red[y_matblanc_bas: y_matblanc_haut, x_bas:x_haut], cmap='gray')
+            plt.figure()
+            plt.imshow(im_red, cmap='gray')
+            plt.plot([0,p], [m, m])
+            plt.plot([x_bas, x_bas,x_haut, x_haut, x_bas], [y_matblanc_bas, y_matblanc_haut, y_matblanc_haut, y_matblanc_bas,y_matblanc_bas])
+            plt.plot([x_bas, x_bas,x_haut, x_haut, x_bas], [y_matnoir_bas, y_matnoir_haut, y_matnoir_haut, y_matnoir_bas, y_matnoir_bas])
+            plt.show()
 
 
 #d_fuji={}

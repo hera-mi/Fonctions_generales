@@ -110,6 +110,7 @@ def correlation_mask_I(im, Lx, Ly, seuil, angle=45):
     mask[122-Lx:122+Lx,118-Ly:118+Ly]=np.ones([2*Lx,2*Ly])
     mask=rotate(mask, angle)
     mask[0,0]=np.max(mask)*np.ones([1,1])
+#    plt.figure(1)
 #    plt.imshow(mask, cmap='gray')
 #    plt.title("mask")
 #    plt.show()
@@ -122,9 +123,11 @@ def correlation_mask_I(im, Lx, Ly, seuil, angle=45):
 #    plt.show()
 #    
     #skimage.filters.try_all_threshold(corr_mask)
-    
+#    plt.figure(3)
+#    plt.imshow(corr_mask, cmap='gray')
+#    plt.show()
     im_corr=corr_mask>seuil
-#    plt.figure()
+#    plt.figure(2)
 #    plt.imshow(im_corr, cmap='gray')
 #    plt.show()
     return(im_corr)
@@ -153,9 +156,9 @@ def redim_im(im):
     
     
     taille=np.shape(im_red) 
-#    plt.figure()
-#    plt.imshow(im_red)
-#    plt.show()
+    plt.figure()
+    plt.imshow(im_red)
+    plt.show()
     return (im_red)
 
 def redim_im_bis(im):
@@ -184,11 +187,11 @@ def redim_im_bis(im):
 
 def pipeline_segm_fibre(im, zone_fibre_n=[0.11,0.22], zone_fibre_p=[0.70,0.87], seuil1=28, seuil2=30):
     '''segmente la fibres de l'im 
-    
+     
+    faire une correlation plus propre en prenant les moyennes et en gérant la variance
     '''
 
     #redim
-       
     im_red=redim_im(im)
     [n,p]=np.shape(im_red)
  
@@ -201,16 +204,14 @@ def pipeline_segm_fibre(im, zone_fibre_n=[0.11,0.22], zone_fibre_p=[0.70,0.87], 
     fibre_inverted=equalize_adapthist(fibre_inverted)
     fftc_highpass=highpass_filter(fibre_inverted,Dc=5)
     fft_highpass=np.fft.ifftshift(fftc_highpass)
-
     invfft_highpass=np.real(np.fft.ifft2(fft_highpass))
-
     im_highpass=invfft_highpass 
     
     #corrélation
     im_corr_I1=correlation_mask_I(im_highpass,4,40, seuil=seuil1, angle=45) 
     im_corr_I2=correlation_mask_I(im_highpass,5,40, seuil=seuil2, angle=135) #4,20, seuil=193, angle=135)
     im_segmentation= (im_corr_I1+im_corr_I2)
-    plt.figure(3)
+    plt.figure()
     plt.imshow(im_segmentation, cmap='gray')
     plt.show()
     
