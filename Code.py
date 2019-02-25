@@ -272,20 +272,21 @@ binary_global = d > global_thresh
 
 masses_contloc=skimage.exposure.equalize_adapthist(masses)
 
-
 def pipeline1(im,block_size = 8,sig=im.std()):
     #im=ndimage.convolve(masses,gradlap()[2])
-    im=ndimage.convolve(im,gaussianKernel(block_size,sig))
+    im_contloc=skimage.exposure.equalize_adapthist(im)
+    im=ndimage.convolve(im_contloc,gaussianKernel(block_size,sig))
     #im=skimage.filters.gaussian(im)
     #im_contloc=skimage.exposure.equalize_adapthist(im)
     im_med=scipy.signal.medfilt(im,7)
     im_contloc=skimage.exposure.equalize_adapthist(im_med)
     im_eq=skimage.exposure.equalize_hist(im_contloc)
+    #im=skimage.filters.sobel(im_eq)-im_eq  #Ca marche pas mal en ajoutant ca
     im_nl = denoise_nl_means(im_eq, h=1.15 * sigma_est, fast_mode=False,
                            **patch_kw)
     im_med=scipy.signal.medfilt(im_nl,7)
-    im=skimage.filters.gaussian(im_med,)
-    
+    im=skimage.filters.gaussian(im_med)
+    im=scipy.signal.medfilt(im,7)
     #im_thresh = threshold_adaptive(im_nl, block_size, offset=0)
     #global_thresh = threshold_otsu(im_nl)
     #im_thresh = im_nl > global_thresh
@@ -294,10 +295,78 @@ def pipeline1(im,block_size = 8,sig=im.std()):
     #◘trouver_zone(skimage.util.invert(i),10,1-i.std())
     t=skimage.filters.threshold_minimum(im)
     imt=(im>t).astype(int)
-    plt.imshow(imt)
+    
+    return(imt)
+    #plt.imshow(imt)
     #skimage.filters.try_all_threshold(im)
-    plt.show()
-    #return(im_nl)
+    #plt.show()
+
+def pipeline2(im,block_size = 8,sig=8):
+    #im=ndimage.convolve(masses,gradlap()[2])
+    #im=im-ndimage.convolve(im,meanKernel(101))
+    #im_contloc=skimage.exposure.equalize_adapthist(im)
+    #im_med=scipy.signal.medfilt(im,7)
+    im=skimage.filters.sobel(im)-im
+    im=ndimage.convolve(im,gaussianKernel(block_size,sig))
+    #im=skimage.filters.gaussian(im)
+    #im_contloc=skimage.exposure.equalize_adapthist(im)
+    #hp=skimage.filters.laplace(im,10)
+    im_med=scipy.signal.medfilt(im,7)
+    #im_med=ndimage.convolve(im_med,gaussianKernel(block_size,sig))
+    #im_contloc=skimage.exposure.equalize_adapthist(im_med)  #ca marche pas dans ce sens
+    im_eq=skimage.exposure.equalize_hist(im_med)
+    #hp=skimage.filters.laplace(im_eq,10)
+    im_nl = denoise_nl_means(im_eq, h=1.15 * sigma_est, fast_mode=False,
+                           **patch_kw)
+    im_med=scipy.signal.medfilt(im_nl,7)
+    im=skimage.filters.gaussian(im_med)
+    #im=skimage.exposure.equalize_hist(im)
+    #hp=skimage.filters.laplace(im,10)
+    
+    #im_thresh = threshold_adaptive(im_nl, block_size, offset=0)
+    #global_thresh = threshold_otsu(im_nl)
+    #im_thresh = im_nl > global_thresh
+    #plt.imshow(im_thresh)
+    #plt.imshow(im>1-im.std()*3.1,cmap='gray')
+    #trouver_zone(skimage.util.invert(i),10,1-i.std())
+
+    t=skimage.filters.threshold_minimum(im)
+    imt=(im>t).astype(int)
+    #plt.imshow(imt)
+    #skimage.filters.try_all_threshold(im)
+    #plt.show()
+    return(imt)
+    
+def pipeline3(im,block_size = 8,sig=im.std()):
+    #im=ndimage.convolve(masses,gradlap()[2])
+    im_contloc=skimage.exposure.equalize_adapthist(im)
+    im=ndimage.convolve(im_contloc,gaussianKernel(block_size,sig))
+    #im=skimage.filters.gaussian(im)
+    #im_contloc=skimage.exposure.equalize_adapthist(im)
+    im_med=scipy.signal.medfilt(im,7)
+    im_contloc=skimage.exposure.equalize_adapthist(im_med)
+    im_eq=skimage.exposure.equalize_hist(im_contloc)
+    im=skimage.filters.sobel(im_eq)-im_eq  #Ca marche pas mal en ajoutant ca
+    im_nl = denoise_nl_means(im, h=1.15 * sigma_est, fast_mode=False,
+                           **patch_kw)
+    im_med=scipy.signal.medfilt(im_nl,7)
+    im=skimage.filters.gaussian(im_med)
+    im=scipy.signal.medfilt(im,7)
+    #im_thresh = threshold_adaptive(im_nl, block_size, offset=0)
+    #global_thresh = threshold_otsu(im_nl)
+    #im_thresh = im_nl > global_thresh
+    #plt.imshow(im_thresh)
+    #plt.imshow(im>1-im.std()*3.1,cmap='gray')
+    #◘trouver_zone(skimage.util.invert(i),10,1-i.std())
+    t=skimage.filters.threshold_minimum(im)
+    imt=(im>t).astype(int)
+    
+    return(imt)
+    
+    
+  
+
+#Essayer de retirer certains filtres afin d'avoir moins de paramètres à regler, et d'être donc moins dépendant de l'image
     
 DIR="D:/Documents/Travail/DATASIm/Projet/Fonctions_generales/Masses test/"
 DIRBIS='./Masses test/'
@@ -314,3 +383,90 @@ def detection(DIR):
     for i in IM:
         i=pipeline1(i)
     return(IM)
+  
+im1=pydicom.dcmread(DIR+"2.16.840.1.113669.632.20.20140513.202406491.200064.424.dcm")
+im1=rotation(im1.pixel_array)
+masses1=isoler(im1,[0.37,0.46],[0.05,0.29])    
+
+im2=pydicom.dcmread(DIR+"hologic-MG02.dcm")
+im2=rotation(im2.pixel_array)
+masses2=isoler(im2,[0.355,0.445],[0.05,0.29])
+
+
+
+im3=pydicom.dcmread(DIR+"ge-0001-0000-00000000.dcm")
+im3=rotation(im3.pixel_array)
+masses3=isoler(im3,[0.32,0.4021],[0.05,0.29])
+
+im4=pydicom.dcmread(DIR+"1.2.392.200036.9125.4.0.2718896371.50333032.466243176.dcm")
+im4=rotation(im4.pixel_array)
+masses4=isoler(im4,[0.35,0.44],[0.05,0.29])
+
+plt.figure(1)
+plt.subplot(4,2,1)
+plt.imshow(masses1)
+plt.title("PlanMed")
+plt.subplot(4,2,2)
+plt.imshow(pipeline1(masses1))
+plt.subplot(4,2,3)
+plt.imshow(masses2)
+plt.title("Hologic")
+plt.subplot(4,2,4)
+plt.imshow(pipeline1(masses2))
+plt.subplot(4,2,5)
+plt.imshow(masses3)
+plt.title("GE")
+plt.subplot(4,2,6)
+plt.imshow(pipeline1(masses3))
+plt.subplot(4,2,7)
+plt.imshow(masses4)
+plt.title("Fuji")
+plt.subplot(4,2,8)
+plt.imshow(pipeline1(masses4))
+
+plt.figure(2)
+plt.subplot(4,2,1)
+plt.imshow(masses1)
+plt.title("PlanMed")
+plt.subplot(4,2,2)
+plt.imshow(pipeline2(masses1))
+plt.subplot(4,2,3)
+plt.imshow(masses2)
+plt.title("Hologic")
+plt.subplot(4,2,4)
+plt.imshow(pipeline2(masses2))
+plt.subplot(4,2,5)
+plt.imshow(masses3)
+plt.title("GE")
+plt.subplot(4,2,6)
+plt.imshow(pipeline2(masses3))
+plt.subplot(4,2,7)
+plt.imshow(masses4)
+plt.title("Fuji")
+plt.subplot(4,2,8)
+plt.imshow(pipeline2(masses4))
+
+plt.figure(3)
+plt.subplot(4,2,1)
+plt.imshow(masses1)
+plt.title("PlanMed")
+plt.subplot(4,2,2)
+plt.imshow(pipeline3(masses1))
+plt.subplot(4,2,3)
+plt.imshow(masses2)
+plt.title("Hologic")
+plt.subplot(4,2,4)
+plt.imshow(pipeline3(masses2))
+plt.subplot(4,2,5)
+plt.imshow(masses3)
+plt.title("GE")
+plt.subplot(4,2,6)
+plt.imshow(pipeline3(masses3))
+plt.subplot(4,2,7)
+plt.imshow(masses4)
+plt.title("Fuji")
+plt.subplot(4,2,8)
+plt.imshow(pipeline3(masses4))
+
+
+hp=skimage.filters.laplace(masses,10)

@@ -157,6 +157,29 @@ def redim_im(im):
 #    plt.show()
     return (im_red)
 
+def redim_im_bis(im):
+    
+    ims=skimage.filters.sobel(im)
+    [n,p]=np.shape(ims)
+    #détection de la posistion du sein selon x (vertical)
+    xh=0
+    while ims[xh,10]<1e-4:
+        xh+=1
+    xb=n-1
+    while ims[xb,10]<1e-4 : 
+        xb-=1
+
+    im=im[xh:xb,:]
+    ims=ims[xh:xb,:]
+    #détection de la position du sein selon y (horrizontal)
+    yg=0
+    while ims[(xb-xh)//2,yg]<1e-4 :
+        yg+=1
+    yd=p-1
+    while ims[(xb-xh)//2,yd]<1e-4 :
+        yd-=1
+    return (im[:,yg:yd])
+
 
 def pipeline_segm_fibre(im, zone_fibre_n=[0.11,0.22], zone_fibre_p=[0.70,0.87], seuil1=28, seuil2=30):
     '''segmente la fibres de l'im 
