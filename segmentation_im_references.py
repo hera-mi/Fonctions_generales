@@ -32,11 +32,11 @@ ds = pydicom.dcmread(chemin)
 imref_ge=ds.pixel_array
 imref_ge=linear(imref_ge, -1, 10000)
 
-pipeline_segm_fibre(imref_ge, zone_fibre_n=[0.9,0.20], zone_fibre_p=[0.68,0.85])
+pipeline_segm_fibre(imref_ge,zone_fibre_n=[0.10,0.21], zone_fibre_p=[0.66,0.84]) 
 
 #hologic
 chemin=IMDIR_hologic + "/" + nom_imref_hologic
 ds = pydicom.dcmread(chemin)
 imref_hologic=ds.pixel_array
 imref_hologic=linear(imref_hologic, -1, 10000)
-pipeline_segm_fibre(imref_hologic)
+pipeline_segm_fibre(imref_hologic,zone_fibre_n=[0.09,0.20], zone_fibre_p=[0.68,0.87], seuil2=80)
