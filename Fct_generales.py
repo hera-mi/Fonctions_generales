@@ -8,6 +8,7 @@ from scipy import ndimage
 import numpy as np
 from skimage.transform import rotate
 import math
+from skimage import filters
 
 
 #Fonctions génerales
