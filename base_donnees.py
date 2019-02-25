@@ -19,6 +19,8 @@ import pydicom
 from pydicom.data import get_testdata_files
 from scipy import ndimage
 import math
+
+
 IMDIR_fuji=r"D:\Documents\Projet Mammographie\datasim-prj-phantoms-fujifilm-dataset-201812130858\datasim-prj-phantoms-fuji-dataset-201812130858"
 IMDIR_planmed=r"D:\Documents\Projet Mammographie\datasim-prj-phantoms-planmed-dataset-201812061411\datasim-prj-phantoms-dataset-201812061411\digital"
 IMDIR_ge=r"D:\Documents\Projet Mammographie\datasim-prj-phantoms-ge-20190125-mg-proc"
@@ -74,13 +76,13 @@ for root, dirnames, filenames in os.walk(IMDIR_planmed):
             moyenne_matnoir=np.mean(im_red[y_matnoir_bas: y_matnoir_haut, x_bas:x_haut])              
             d_planmed['moyenne_mat_blanc'].append(moyenne_matblanc)
             d_planmed['moyenne_mat_noir'].append(moyenne_matnoir)
-            plt.imshow(im_red[y_matblanc_bas: y_matblanc_haut, x_bas:x_haut], cmap='gray')
-            plt.figure()
-            plt.imshow(im_red, cmap='gray')
-            plt.plot([0,p], [m, m])
-            plt.plot([x_bas, x_bas,x_haut, x_haut, x_bas], [y_matblanc_bas, y_matblanc_haut, y_matblanc_haut, y_matblanc_bas,y_matblanc_bas])
-            plt.plot([x_bas, x_bas,x_haut, x_haut, x_bas], [y_matnoir_bas, y_matnoir_haut, y_matnoir_haut, y_matnoir_bas, y_matnoir_bas])
-            plt.show()
+#            plt.imshow(im_red[y_matblanc_bas: y_matblanc_haut, x_bas:x_haut], cmap='gray')
+#            plt.figure()
+#            plt.imshow(im_red, cmap='gray')
+#            plt.plot([0,p], [m, m])
+#            plt.plot([x_bas, x_bas,x_haut, x_haut, x_bas], [y_matblanc_bas, y_matblanc_haut, y_matblanc_haut, y_matblanc_bas,y_matblanc_bas])
+#            plt.plot([x_bas, x_bas,x_haut, x_haut, x_bas], [y_matnoir_bas, y_matnoir_haut, y_matnoir_haut, y_matnoir_bas, y_matnoir_bas])
+#            plt.show()
 
 
 #d_fuji={}

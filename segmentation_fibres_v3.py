@@ -18,6 +18,7 @@ script à appliquer à partir des zones des fibres inversées et égalisées:
 """
 
 import skimage 
+import scipy
 import os
 import numpy as np
 import matplotlib.pyplot as plt
@@ -60,19 +61,24 @@ im_red=redim_im(im)
 
 #isolement fibre f1
  
-fibre_F1=isoler(im_red, [0.11,0.22], [0.70,0.87])           
-    
-# traitement fibre F1
+fibre_F1=isoler(im_red, [0.11,0.22], [0.70,0.86])
+         
+#np.array([s])
 
+
+# traitement fibre F1
+fibre_F1_inverted=linear(fibre_F1, -1, 10000)
+
+
+fibre_F1_inverted=equalize_adapthist(fibre_F1_inverted)
 fftc_highpass=highpass_filter(fibre_F1_inverted,Dc=5)
 fft_highpass=np.fft.ifftshift(fftc_highpass)
 invfft_highpass=np.real(np.fft.ifft2(fft_highpass))
-plt.figure(1)
-plt.imshow(invfft_highpass, cmap='gray')
-plt.show()
+
 
 im_highpass=invfft_highpass 
 
+im_highpass=scipy.signal.medfilt(skimage.restoration.denoise_nl_means(invfft_highpass))
 
 
 im_corr_I1=correlation_mask_I(im_highpass,4,40, seuil=31, angle=45) 
@@ -88,11 +94,9 @@ plt.show()
 fftc_highpass=highpass_filter(fibre_F5_inverted,Dc=5)
 fft_highpass=np.fft.ifftshift(fftc_highpass)
 invfft_highpass=np.real(np.fft.ifft2(fft_highpass))
-plt.figure(3)
-plt.imshow(invfft_highpass, cmap='gray')
-plt.show()
 
-im_highpass=invfft_highpass 
+im_highpass=invfft_highpass
+invfft_highpass=scipy.signal.medfilt(skimage.restoration.denoise_nl_means(invfft_highpass)) 
 
 im_corr_I1=correlation_mask_I(im_highpass,3,40, seuil=28, angle=45) 
 im_corr_I2=correlation_mask_I(im_highpass,4,60, seuil=26, angle=135) 
@@ -102,15 +106,12 @@ plt.imshow(im_segmentation_F5, cmap='gray')
 plt.show()
 
 # traitement toute fibre
-fftc_highpass=highpass_filter(zone_fibres_inverted,Dc=5)
-fft_highpass=np.fft.ifftshift(fftc_highpass)
-invfft_highpass=np.real(np.fft.ifft2(fft_highpass))
-plt.figure(5)
-plt.imshow(invfft_highpass, cmap='gray')
-plt.show()
-
-im_highpass=invfft_highpass /10000
-im_corr_I1=correlation_mask_I(im_highpass,3,40, seuil=5, angle=45) 
+#fftc_highpass=highpass_filter(zone_fibres_inverted,Dc=5)
+#fft_highpass=np.fft.ifftshift(fftc_highpass)
+#invfft_highpass=np.real(np.fft.ifft2(fft_highpass))
+#
+#im_highpass=invfft_highpass /10000
+#im_corr_I1=correlation_mask_I(im_highpass,3,40, seuil=5, angle=45) 
 
 # zones carrés noir et blanc
 
@@ -127,7 +128,7 @@ y_matnoir_haut=m+125+30
 moyenne_matblanc=np.mean(im_red[y_matblanc_bas: y_matblanc_haut, x_bas:x_haut])
 moyenne_matnoir=np.mean(im_red[y_matnoir_bas: y_matnoir_haut, x_bas:x_haut])              
 
-
+plt.figure()
 plt.imshow(im_red, cmap='gray')
 plt.plot([0,p], [m, m])
 plt.plot([x_bas, x_bas,x_haut, x_haut, x_bas], [y_matblanc_bas, y_matblanc_haut, y_matblanc_haut, y_matblanc_bas,y_matblanc_bas])

@@ -40,7 +40,7 @@ ds = pydicom.dcmread(chemin)
 im=ds.pixel_array
 [n,p]=np.shape(ds.pixel_array)
 
-#zones fibres
+#zones fibres 
 
 
 zone_fibres=isoler(im, [0.13,0.40], [0.55,0.91]) #partie de l'image correspondant aux fibres
