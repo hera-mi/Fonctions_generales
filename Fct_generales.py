@@ -8,6 +8,7 @@ from scipy import ndimage
 import numpy as np
 from skimage.transform import rotate
 import math
+from skimage import filters
 
 
 #Fonctions génerales
@@ -163,10 +164,10 @@ def redim_im_bis(im):
     [n,p]=np.shape(ims)
     #détection de la posistion du sein selon x (vertical)
     xh=0
-    while ims[xh,10]<1e-4:
+    while ims[xh,p-10]<1e-4:
         xh+=1
     xb=n-1
-    while ims[xb,10]<1e-4 : 
+    while ims[xb,p-10]<1e-4 : 
         xb-=1
 
     im=im[xh:xb,:]
