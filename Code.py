@@ -385,22 +385,25 @@ def detection(DIR):
     return(IM)
   
 im1=pydicom.dcmread(DIR+"2.16.840.1.113669.632.20.20140513.202406491.200064.424.dcm")
-im1=rotation(im1.pixel_array)
-masses1=isoler(im1,[0.37,0.46],[0.05,0.29])    
+#im1=rotation(im1.pixel_array)
+#masses1=isoler(im1,[0.37,0.46],[0.05,0.29])    
+masses1=isoler(redim_im_bis(im1.pixel_array),[0.603,0.722],[0.436,0.9])
 
 im2=pydicom.dcmread(DIR+"hologic-MG02.dcm")
-im2=rotation(im2.pixel_array)
-masses2=isoler(im2,[0.355,0.445],[0.05,0.29])
-
+#im2=rotation(im2.pixel_array)
+#masses2=isoler(im2,[0.355,0.445],[0.05,0.29])
+masses2=isoler(redim_im_bis(im2.pixel_array),[0.603,0.722],[0.436,0.9])
 
 
 im3=pydicom.dcmread(DIR+"ge-0001-0000-00000000.dcm")
-im3=rotation(im3.pixel_array)
-masses3=isoler(im3,[0.32,0.4021],[0.05,0.29])
+#im3=rotation(im3.pixel_array)
+#masses3=isoler(im3,[0.32,0.4021],[0.05,0.29])
+masses3=isoler(redim_im_bis(im3.pixel_array),[0.603,0.722],[0.436,0.9])
 
 im4=pydicom.dcmread(DIR+"1.2.392.200036.9125.4.0.2718896371.50333032.466243176.dcm")
-im4=rotation(im4.pixel_array)
-masses4=isoler(im4,[0.35,0.44],[0.05,0.29])
+#im4=rotation(im4.pixel_array)
+#masses4=isoler(im4,[0.35,0.44],[0.05,0.29])
+masses4=isoler(redim_im_bis(im4.pixel_array),[0.603,0.722],[0.436,0.9])
 
 plt.figure(1)
 plt.subplot(4,2,1)
