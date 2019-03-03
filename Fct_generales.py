@@ -4,11 +4,20 @@ Created on Sat Jan 19 11:12:27 2019
 
 @author: villa
 """
-from scipy import ndimage
+
 import numpy as np
+import skimage
 from skimage.transform import rotate
+from skimage.exposure import equalize_adapthist
+from skimage import filters
+import math
+import scipy
+from scipy import signal
+from scipy import ndimage
+import matplotlib.pyplot as plt
 import math
 import skimage.filters
+
 
 
 #Fonctions génerales
@@ -116,14 +125,15 @@ def correlation_mask_I(im, Lx, Ly, seuil, angle=45):
 #    plt.title("mask")
 #    plt.show()
     corr_mask=signal.correlate(im, mask, mode='same')
-    max_corr_mask=np.max(corr_mask)
-    min_corr_mask=np.min(corr_mask)
+#    max_corr_mask=np.max(corr_mask)
+#    min_corr_mask=np.min(corr_mask)
 #    y, x = np.histogram(corr_mask, bins=np.arange(min_corr_mask,max_corr_mask))
 #    fig, ax = plt.subplots()
 #    plt.plot(x[:-1], y)
 #    plt.show()
-#    
-    skimage.filters.try_all_threshold(corr_mask)
+
+    #skimage.filters.try_all_threshold(corr_mask)
+    seuil=skimage.filters.threshold_yen(corr_mask)
 #    plt.figure(3)
 #    plt.imshow(corr_mask, cmap='gray')
 #    plt.show()
@@ -139,17 +149,17 @@ def redim_im(im):
     [n,p]=np.shape(im)
     #détection de la posistion du sein selon y (vertical)
     y_haut=0
-    maxi=np.max(im)
-    while im[y_haut,p-1]>(maxi-500) and im[n//2,1]>(maxi-500): #on ne prend pas les images retourner car la fonction rotation change le tableau
+    mini=np.min(im)
+    while im[y_haut,p-1]<(mini+500) and im[n//2,1]<(mini+500): #on ne prend pas les images retourner car la fonction rotation change le tableau
         y_haut+=1
     y_bas=1
-    while im[n-y_bas,p-1]>(maxi-500) and im[n//2,1]>(maxi-500): #on ne prend pas les images retourner car la fonction rotation change le tableau
+    while im[n-y_bas,p-1]<(mini+500) and im[n//2,1]<(mini+500): #on ne prend pas les images retourner car la fonction rotation change le tableau
         y_bas+=1
     pos_y=[y_haut, y_bas]  # le sein estv de la ligne y_haut à y_bas
     
     #détection de la position du sein selon x (horrizontal)
     x=0
-    while im[n//2,x]>(maxi-500) and im[n//2,1]>(maxi-500): #on ne prend pas les images retourner car la fonction rotation change le tableau
+    while im[n//2,x]<(mini+500) and im[n//2,1]<(mini+500): #on ne prend pas les images retourner car la fonction rotation change le tableau
         x+=1
     pos_x=[x, p] # le sein est de la colonne x à taille[1]         
    
@@ -162,6 +172,7 @@ def redim_im(im):
 def redim_im_bis(im):
     
     ims=skimage.filters.sobel(im)
+    plt.imshow(im)
     [n,p]=np.shape(ims)
 
     #détection de la posistion du sein selon x (vertical)
@@ -186,40 +197,63 @@ def redim_im_bis(im):
 
 
 def pipeline_segm_fibre(im, zone_fibre_n=[0.12,0.22], zone_fibre_p=[0.70,0.85], seuil1=28, seuil2=30):
-    '''segmente la fibres de l'im 
+    '''segmente la fibres issue de zone_fibre, entée =image d'un fichier dicom
      
-    faire une correlation plus propre en prenant les moyennes et en gérant la variance
+pipeline :
+
+-inversion si nécessaire
+-redimension
+-isolement des fibres
+-equalize adapthist
+-filtrage passe haut pour enlever le gradient
+-filtre median et non local mean
+-corrélation des deux mask
+-OU logique
+
+
+A faire ?:
+    -faire une correlation plus propre en prenant les moyennes et en gérant la variance
+    -Etiquettage des branches ?
     '''
 
+    #test inversion
+    [n,p]=np.shape(im)
+    if np.mean(im[n//2-10:n//2+10 , 0:20]) > np.mean(im[n//2-10:n//2+10 , p-21:p-1]) :
+        im=-im+np.max(im)
+        
     #redim
     im_red=redim_im(im)
     [n,p]=np.shape(im_red)
-    
+#    plt.figure()
+#    plt.imshow(im_red)
+#    plt.show()
+
+  
     #isolement fibre f1
-     
+    
     fibre=isoler(im_red, zone_fibre_n, zone_fibre_p)           
-    plt.figure()
-    plt.imshow(fibre, cmap='gray')
-    plt.show()
     
     # traitement fibre 
-    
-    fibre_inverted=linear(fibre, -1, 10000)
-    fibre_inverted=equalize_adapthist(fibre_inverted)
-    fftc_highpass=highpass_filter(fibre_inverted,Dc=5)
+
+    fibre=equalize_adapthist(fibre)
+    fftc_highpass=highpass_filter(fibre,Dc=5)
     fft_highpass=np.fft.ifftshift(fftc_highpass)
     invfft_highpass=np.real(np.fft.ifft2(fft_highpass))
-    im_highpass=invfft_highpass 
-    invfft_highpass=scipy.signal.medfilt(skimage.restoration.denoise_nl_means(invfft_highpass)) 
-
+    im_filtree=scipy.signal.medfilt(skimage.restoration.denoise_nl_means(invfft_highpass)) 
+    plt.figure()
+    plt.imshow(invfft_highpass, cmap='gray')
+    plt.show()
+    
     #corrélation
-    im_corr_I1=correlation_mask_I(im_highpass,4,40, seuil=seuil1, angle=45) 
-    im_corr_I2=correlation_mask_I(im_highpass,5,40, seuil=seuil2, angle=135) #4,20, seuil=193, angle=135)
+    im_corr_I1=correlation_mask_I(im_filtree,4,40, seuil=seuil1, angle=45) 
+    im_corr_I2=correlation_mask_I(im_filtree,5,40, seuil=seuil2, angle=135) #4,20, seuil=193, angle=135)
     im_segmentation= (im_corr_I1+im_corr_I2)
     plt.figure()
     plt.imshow(im_segmentation, cmap='gray')
     plt.show()
     
+    
     return(im_segmentation)
+
 
 
