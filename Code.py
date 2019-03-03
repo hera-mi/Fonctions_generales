@@ -461,27 +461,35 @@ def detection(DIR):
     for i in IM:
         i=pipeline1(i)
     return(IM)
+    
+def normalisation(im):
+    m=np.max(im)
+    return(im/m)
   
 im1=pydicom.dcmread(DIR+"2.16.840.1.113669.632.20.20140513.202406491.200064.424.dcm")
 #im1=rotation(im1.pixel_array)
 #masses1=isoler(im1,[0.37,0.46],[0.05,0.29])    
 masses1=isoler(redim_im_bis(im1.pixel_array),[0.603,0.722],[0.436,0.9])
+masses1=normalisation(masses1)
 
 im2=pydicom.dcmread(DIR+"hologic-MG02.dcm")
 #im2=rotation(im2.pixel_array)
 #masses2=isoler(im2,[0.355,0.445],[0.05,0.29])
 masses2=isoler(redim_im_bis(im2.pixel_array),[0.603,0.722],[0.436,0.9])
-
+masses2=normalisation(masses2)
 
 im3=pydicom.dcmread(DIR+"ge-0001-0000-00000000.dcm")
 #im3=rotation(im3.pixel_array)
 #masses3=isoler(im3,[0.32,0.4021],[0.05,0.29])
 masses3=isoler(redim_im_bis(im3.pixel_array),[0.603,0.722],[0.436,0.9])
+masses3=normalisation(masses3)
 
 im4=pydicom.dcmread(DIR+"1.2.392.200036.9125.4.0.2718896371.50333032.466243176.dcm")
 #im4=rotation(im4.pixel_array)
 #masses4=isoler(im4,[0.35,0.44],[0.05,0.29])
 masses4=isoler(redim_im_bis(im4.pixel_array),[0.603,0.722],[0.436,0.9])
+masses4=normalisation(masses4)
+
 
 def test1():
 
@@ -493,7 +501,7 @@ def test1():
     plt.imshow(pipeline1(masses1))
     print("L'image de Medplan a une moyenne de {}, \n un écart-type de {},\n un contraste de {},"
           "\n un rapport ecart-type / moyenne de {},\n une skewness de {}, \n et un kurtosis de {}".format(np.mean(masses1),
-          np.std(masses1-np.mean(masses1))/np.max(masses1),1-np.min(masses1)/np.max(masses1),np.std(masses1)/np.mean(masses1),
+          np.std(masses1-np.mean(masses1)),1-np.min(masses1),np.std(masses1)/np.mean(masses1),
           scipy.stats.moment(masses1, moment=3, axis=None),scipy.stats.moment(masses1, moment=4, axis=None)))
     plt.subplot(4,2,3)
     plt.imshow(masses2)
@@ -503,7 +511,7 @@ def test1():
     print("L'image de Hologic a une moyenne de {}\n, un écart-type de {}\n, un contraste de {}"
           ",\n un rapport ecart-type / moyenne de {},\n une skewness de {}, \n et un kurtosis de {}"
           .format(np.mean(masses2),
-          np.std(masses2-np.mean(masses2))/np.max(masses2),1-np.min(masses2)/np.max(masses2),np.std(masses2)/np.mean(masses2),
+          np.std(masses2-np.mean(masses2)),1-np.min(masses2),np.std(masses2)/np.mean(masses2),
           scipy.stats.moment(masses2, moment=3, axis=None),scipy.stats.moment(masses2, moment=4, axis=None)))
     plt.subplot(4,2,5)
     plt.imshow(masses3)
@@ -513,7 +521,7 @@ def test1():
     print("L'image de GE a une moyenne de {}\n, un écart-type de {}\n, un contraste de {},"
           "\n un rapport ecart-type / moyenne de {},\n une skewness de {}, \n et un kurtosis de {}"
           .format(np.mean(masses3),
-          np.std(masses3-np.mean(masses3))/np.max(masses3),1-np.min(masses3)/np.max(masses3),np.std(masses3)/np.mean(masses3),
+          np.std(masses3-np.mean(masses3)),1-np.min(masses3),np.std(masses3)/np.mean(masses3),
           scipy.stats.moment(masses3, moment=3, axis=None),scipy.stats.moment(masses3, moment=4, axis=None)))
     plt.subplot(4,2,7)
     plt.imshow(masses4)
@@ -523,7 +531,7 @@ def test1():
     print("L'image de Medplan a une moyenne de {}\n, un écart-type de {}\n, un contraste de {},"
           "\n un rapport ecart-type / moyenne de {},\n une skewness de {}, \n et un kurtosis de {}"
           .format(np.mean(masses4),
-          np.std(masses4-np.mean(masses4))/np.max(masses4),1-np.min(masses4)/np.max(masses4),np.std(masses4)/np.mean(masses4),
+          np.std(masses4-np.mean(masses4))),1-np.min(masses4),np.std(masses4)/np.mean(masses4),
           scipy.stats.moment(masses4, moment=3, axis=None),scipy.stats.moment(masses4, moment=4, axis=None)))
     
     plt.figure(2)
