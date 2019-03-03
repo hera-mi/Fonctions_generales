@@ -15,6 +15,10 @@ import scipy
 from scipy import signal
 from scipy import ndimage
 import matplotlib.pyplot as plt
+import math
+import skimage.filters
+
+
 
 #Fonctions génerales
 

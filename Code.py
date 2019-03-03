@@ -363,7 +363,85 @@ def pipeline3(im,block_size = 8,sig=im.std()):
     
     return(imt)
     
+def pipeline4(im,block_size = 8,sig=im.std()):
+    #im=ndimage.convolve(masses,gradlap()[2])
+    im_contloc=skimage.exposure.equalize_adapthist(im)
+    im=ndimage.convolve(im_contloc,gaussianKernel(block_size,sig))
+    #im=skimage.filters.gaussian(im)
+    #im_contloc=skimage.exposure.equalize_adapthist(im)
+    im_med=scipy.signal.medfilt(im,7)
+    im_contloc=skimage.exposure.equalize_adapthist(im_med)
+    im_eq=skimage.exposure.equalize_hist(im_contloc)
+    im=skimage.filters.sobel(im_eq)-im_eq  #Ca marche pas mal en ajoutant ca
+    im_nl = denoise_nl_means(im, h=1.15 * sigma_est, fast_mode=False,
+                           **patch_kw)
+    im_med=scipy.signal.medfilt(im_nl,7)
+    im=skimage.filters.gaussian(im_med)
+    im=scipy.signal.medfilt(im,7)
+    #im_thresh = threshold_adaptive(im_nl, block_size, offset=0)
+    #global_thresh = threshold_otsu(im_nl)
+    #im_thresh = im_nl > global_thresh
+    #plt.imshow(im_thresh)
+    #plt.imshow(im>1-im.std()*3.1,cmap='gray')
+    #◘trouver_zone(skimage.util.invert(i),10,1-i.std())
+    #♠t=skimage.filters.threshold_minimum(im)
+    #imt=(im>t).astype(int)
+    #plt.figure(2)
+    #plt.imshow(im)
+    f=np.zeros_like(im)
+    f[230,170],f[230,370],f[230,550],f[130,43],f[40,170],f[40,370],f[40,550]=1,2,3,4,5,6,7
+    im=skimage.segmentation.random_walker(im,f)
     
+    return(im)
+    
+def pipeline_moy(im,block_size = 8,sig=8):
+    #im=ndimage.convolve(masses,gradlap()[2])
+    im_contloc=skimage.exposure.equalize_adapthist(im)
+    im=ndimage.convolve(im_contloc,gaussianKernel(block_size,sig))
+    im2=ndimage.convolve(im,gaussianKernel(2*block_size,2*sig))
+    im3=ndimage.convolve(im2,gaussianKernel(4*block_size,4*sig))
+    
+    #im=skimage.filters.gaussian(im)
+    #im_contloc=skimage.exposure.equalize_adapthist(im)
+    im_med=scipy.signal.medfilt(im3,7)
+    #im_contloc=skimage.exposure.equalize_adapthist(im_med)
+    im_eq=skimage.exposure.equalize_hist(im_contloc)
+    im=skimage.filters.sobel(im_eq)-im_eq  #Ca marche pas mal en ajoutant ca
+    im_nl = denoise_nl_means(im, h=1.15 * sigma_est, fast_mode=False,
+                           **patch_kw)
+    im_med=scipy.signal.medfilt(im_nl,7)
+    im=skimage.filters.gaussian(im_med)
+    im=scipy.signal.medfilt(im,7)
+    skimage.filters.try_all_threshold(im)
+    #im_thresh = threshold_adaptive(im_nl, block_size, offset=0)
+    #global_thresh = threshold_otsu(im_nl)
+    #im_thresh = im_nl > global_thresh
+    #plt.imshow(im_thresh)
+    #plt.imshow(im>1-im.std()*3.1,cmap='gray')
+    #◘trouver_zone(skimage.util.invert(i),10,1-i.std())
+    #♠t=skimage.filters.threshold_minimum(im)
+    #imt=(im>t).astype(int)
+    #plt.figure(2)
+    #plt.imshow(im)
+
+    
+     #return(im)
+def gamma_cor(im):
+    G=[0.1,0.25,0.5, 1, 1.5, 2.5 ]    
+    for i in range(len(G)):
+        plt.figure(i)
+        plt.imshow(pipeline3(skimage.exposure.adjust_gamma(im,G[i])))
+        
+#On remarque qu'un correction de 0.25 donne de meilleurs sur pipeline1
+    
+    
+#f=np.zeros_like(masses1)
+#f[230,170],f[230,370],f[230,550],f[130,43],f[40,170],f[40,370],f[40,550]=1,2,3,4,5,6,7
+#im=skimage.segmentation.random_walker(masses1,f)    
+    
+#Lire doc thresh min, eventuellement appliquer correction gamma
+    #pandas -> créeer des tableaux : sauvegarder pour chaque img la moyenne, val max/min, les moments
+    #regarder les paramètres des images qui marchent le mieux
   
 
 #Essayer de retirer certains filtres afin d'avoir moins de paramètres à regler, et d'être donc moins dépendant de l'image
@@ -405,71 +483,106 @@ im4=pydicom.dcmread(DIR+"1.2.392.200036.9125.4.0.2718896371.50333032.466243176.d
 #masses4=isoler(im4,[0.35,0.44],[0.05,0.29])
 masses4=isoler(redim_im_bis(im4.pixel_array),[0.603,0.722],[0.436,0.9])
 
-plt.figure(1)
-plt.subplot(4,2,1)
-plt.imshow(masses1)
-plt.title("PlanMed")
-plt.subplot(4,2,2)
-plt.imshow(pipeline1(masses1))
-plt.subplot(4,2,3)
-plt.imshow(masses2)
-plt.title("Hologic")
-plt.subplot(4,2,4)
-plt.imshow(pipeline1(masses2))
-plt.subplot(4,2,5)
-plt.imshow(masses3)
-plt.title("GE")
-plt.subplot(4,2,6)
-plt.imshow(pipeline1(masses3))
-plt.subplot(4,2,7)
-plt.imshow(masses4)
-plt.title("Fuji")
-plt.subplot(4,2,8)
-plt.imshow(pipeline1(masses4))
+def test1():
 
-plt.figure(2)
-plt.subplot(4,2,1)
-plt.imshow(masses1)
-plt.title("PlanMed")
-plt.subplot(4,2,2)
-plt.imshow(pipeline2(masses1))
-plt.subplot(4,2,3)
-plt.imshow(masses2)
-plt.title("Hologic")
-plt.subplot(4,2,4)
-plt.imshow(pipeline2(masses2))
-plt.subplot(4,2,5)
-plt.imshow(masses3)
-plt.title("GE")
-plt.subplot(4,2,6)
-plt.imshow(pipeline2(masses3))
-plt.subplot(4,2,7)
-plt.imshow(masses4)
-plt.title("Fuji")
-plt.subplot(4,2,8)
-plt.imshow(pipeline2(masses4))
-
-plt.figure(3)
-plt.subplot(4,2,1)
-plt.imshow(masses1)
-plt.title("PlanMed")
-plt.subplot(4,2,2)
-plt.imshow(pipeline3(masses1))
-plt.subplot(4,2,3)
-plt.imshow(masses2)
-plt.title("Hologic")
-plt.subplot(4,2,4)
-plt.imshow(pipeline3(masses2))
-plt.subplot(4,2,5)
-plt.imshow(masses3)
-plt.title("GE")
-plt.subplot(4,2,6)
-plt.imshow(pipeline3(masses3))
-plt.subplot(4,2,7)
-plt.imshow(masses4)
-plt.title("Fuji")
-plt.subplot(4,2,8)
-plt.imshow(pipeline3(masses4))
+    plt.figure(1)
+    plt.subplot(4,2,1)
+    plt.imshow(masses1)
+    plt.title("PlanMed")
+    plt.subplot(4,2,2)
+    plt.imshow(pipeline1(masses1))
+    print("L'image de Medplan a une moyenne de {}, \n un écart-type de {},\n un contraste de {},"
+          "\n un rapport ecart-type / moyenne de {},\n une skewness de {}, \n et un kurtosis de {}".format(np.mean(masses1),
+          np.std(masses1-np.mean(masses1))/np.max(masses1),1-np.min(masses1)/np.max(masses1),np.std(masses1)/np.mean(masses1),
+          scipy.stats.moment(masses1, moment=3, axis=None),scipy.stats.moment(masses1, moment=4, axis=None)))
+    plt.subplot(4,2,3)
+    plt.imshow(masses2)
+    plt.title("Hologic")
+    plt.subplot(4,2,4)
+    plt.imshow(pipeline1(masses2))
+    print("L'image de Hologic a une moyenne de {}\n, un écart-type de {}\n, un contraste de {}"
+          ",\n un rapport ecart-type / moyenne de {},\n une skewness de {}, \n et un kurtosis de {}"
+          .format(np.mean(masses2),
+          np.std(masses2-np.mean(masses2))/np.max(masses2),1-np.min(masses2)/np.max(masses2),np.std(masses2)/np.mean(masses2),
+          scipy.stats.moment(masses2, moment=3, axis=None),scipy.stats.moment(masses2, moment=4, axis=None)))
+    plt.subplot(4,2,5)
+    plt.imshow(masses3)
+    plt.title("GE")
+    plt.subplot(4,2,6)
+    plt.imshow(pipeline1(masses3))
+    print("L'image de GE a une moyenne de {}\n, un écart-type de {}\n, un contraste de {},"
+          "\n un rapport ecart-type / moyenne de {},\n une skewness de {}, \n et un kurtosis de {}"
+          .format(np.mean(masses3),
+          np.std(masses3-np.mean(masses3))/np.max(masses3),1-np.min(masses3)/np.max(masses3),np.std(masses3)/np.mean(masses3),
+          scipy.stats.moment(masses3, moment=3, axis=None),scipy.stats.moment(masses3, moment=4, axis=None)))
+    plt.subplot(4,2,7)
+    plt.imshow(masses4)
+    plt.title("Fuji")
+    plt.subplot(4,2,8)
+    plt.imshow(pipeline1(masses4))
+    print("L'image de Medplan a une moyenne de {}\n, un écart-type de {}\n, un contraste de {},"
+          "\n un rapport ecart-type / moyenne de {},\n une skewness de {}, \n et un kurtosis de {}"
+          .format(np.mean(masses4),
+          np.std(masses4-np.mean(masses4))/np.max(masses4),1-np.min(masses4)/np.max(masses4),np.std(masses4)/np.mean(masses4),
+          scipy.stats.moment(masses4, moment=3, axis=None),scipy.stats.moment(masses4, moment=4, axis=None)))
+    
+    plt.figure(2)
+    plt.subplot(4,2,1)
+    plt.imshow(masses1)
+    plt.title("PlanMed")
+    plt.subplot(4,2,2)
+    plt.imshow(pipeline2(masses1))
+    plt.subplot(4,2,3)
+    plt.imshow(masses2)
+    plt.title("Hologic")
+    plt.subplot(4,2,4)
+    plt.imshow(pipeline2(masses2))
+    plt.subplot(4,2,5)
+    plt.imshow(masses3)
+    plt.title("GE")
+    plt.subplot(4,2,6)
+    plt.imshow(pipeline2(masses3))
+    plt.subplot(4,2,7)
+    plt.imshow(masses4)
+    plt.title("Fuji")
+    plt.subplot(4,2,8)
+    plt.imshow(pipeline2(masses4))
+    
+    plt.figure(3)
+    plt.subplot(4,2,1)
+    plt.imshow(masses1)
+    plt.title("PlanMed")
+    plt.subplot(4,2,2)
+    plt.imshow(pipeline3(masses1))
+    plt.subplot(4,2,3)
+    plt.imshow(masses2)
+    plt.title("Hologic")
+    plt.subplot(4,2,4)
+    plt.imshow(pipeline3(masses2))
+    plt.subplot(4,2,5)
+    plt.imshow(masses3)
+    plt.title("GE")
+    plt.subplot(4,2,6)
+    plt.imshow(pipeline3(masses3))
+    plt.subplot(4,2,7)
+    plt.imshow(masses4)
+    plt.title("Fuji")
+    plt.subplot(4,2,8)
+    plt.imshow(pipeline3(masses4))
 
 
 hp=skimage.filters.laplace(masses,10)
+
+"""
+plt.figure(4)
+plt.subplot(4,1,1)
+plt.imshow(skimage.filters.sobel(masses4))
+
+plt.subplot(4,1,2)
+plt.imshow(skimage.filters.sobel(masses4)-masses4)
+plt.subplot(4,1,3)
+plt.imshow(ndimage.convolve(masses4,meanKernel(101)))
+plt.subplot(4,1,4)
+plt.imshow(masses4)
+"""
+#tenter de flouter beaucoup l'image, puis de trouver les masses?
