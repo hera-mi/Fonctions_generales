@@ -8,9 +8,10 @@ Created on Wed Feb 13 22:54:45 2019
     
 -voir seuil générale
 -fair une étude détaillée sur une iamge de ref (à moitié déja fait)
+
 -calculer pr chaque image les valeurs moyenne de la glande et de la graisse (àmoitié ok)
--seuil en fonctio du tiret au dessus
--voir normalisation gamma
+-seuil en fonctio du tiret au dessus (pas à faire si yen marche)
+
 -mettre au propre redim
 
 """
@@ -28,7 +29,7 @@ from scipy import signal
 import skimage.io as io
 from skimage.transform import rotate
 from skimage.exposure import equalize_adapthist
-
+from Fct_generales import *
 
 plt.close('all')
 
@@ -44,49 +45,50 @@ nom_imref_planmed="2.16.840.1.113669.632.20.20140513.202406491.200064.424.dcm"
 nom_imref_fuji="1.2.392.200036.9125.4.0.3826927078.1023464352.885066624.dcm"
 
 
-'''
+
 #planmed
 chemin=IMDIR_planmed + "/" + nom_imref_planmed
 ds = pydicom.dcmread(chemin)
 imref_planmed=ds.pixel_array
-np.save("imref_planmed.npy", imref_planmed)
-pipeline_segm_fibre(imref_planmed)
+F1_planmed=pipeline_segm_fibre(imref_planmed)
 
 #ge
 chemin=IMDIR_ge + "/" + nom_imref_ge
 ds = pydicom.dcmread(chemin)
 imref_ge=ds.pixel_array
-imref_ge=linear(imref_ge, -1, 10000)
-np.save("imref_ge.npy", imref_ge)
-pipeline_segm_fibre(imref_ge,zone_fibre_n=[0.10,0.21], zone_fibre_p=[0.66,0.83]) 
+F1_ge=pipeline_segm_fibre(imref_ge,zone_fibre_n=[0.10,0.21], zone_fibre_p=[0.66,0.83])
 
 # hologic
 chemin=IMDIR_hologic + "/" + nom_imref_hologic
 ds = pydicom.dcmread(chemin)
 imref_hologic=ds.pixel_array
-imref_hologic=linear(imref_hologic, -1, 10000)
-np.save("imref_hologic.npy", imref_hologic)
-pipeline_segm_fibre(imref_hologic,zone_fibre_n=[0.09,0.20], zone_fibre_p=[0.68,0.85]) 
-
-
+F1_hologic=pipeline_segm_fibre(imref_hologic,zone_fibre_n=[0.09,0.20], zone_fibre_p=[0.68,0.84]) 
 
 #fuji
 chemin=IMDIR_fuji + "/" + nom_imref_fuji
 ds = pydicom.dcmread(chemin)
 imref_fuji=ds.pixel_array
 np.save("imref_fuji.npy", imref_fuji)
-pipeline_segm_fibre(imref_fuji,zone_fibre_n=[0.07,0.15], zone_fibre_p=[0.66,0.81]) #, seuil2=80)
-'''
-imref_planmed=np.load("imref_planmed.npy")
-pipeline_segm_fibre(imref_planmed)
+F1_fuji=pipeline_segm_fibre(imref_fuji,zone_fibre_n=[0.07,0.15], zone_fibre_p=[0.66,0.81]) #, seuil2=80)
 
-imref_ge=np.load("imref_ge.npy")
-pipeline_segm_fibre(imref_ge,zone_fibre_n=[0.10,0.21], zone_fibre_p=[0.66,0.83]) 
 
-imref_hologic=np.load("imref_hologic.npy")
-pipeline_segm_fibre(imref_hologic,zone_fibre_n=[0.09,0.20], zone_fibre_p=[0.68,0.84]) 
 
-imref_fuji=np.load("imref_fuji.npy")
-pipeline_segm_fibre(imref_fuji,zone_fibre_n=[0.07,0.15], zone_fibre_p=[0.66,0.81]) #, seuil2=80)
+
+plt.close('all')
+plt.figure(1)
+plt.imshow(redim_im(imref_ge), cmap='gray')
+plt.show()
+
+plt.figure(2)
+plt.imshow(redim_im(-imref_planmed+np.max(imref_planmed)))
+plt.show()
+
+
+
+
+
+
+
+
 
 

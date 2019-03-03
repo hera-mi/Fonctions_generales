@@ -29,7 +29,8 @@ import math
 from scipy import signal
 import skimage.io as io
 from skimage.transform import rotate
-from skimage.exposure import equalize_adapthist
+
+from Fct_generales import *
 
 #ouverture de l'image
 IMDIR=r"D:\Documents\Projet Mammographie\datasim-prj-phantoms-planmed-dataset-201812061411\datasim-prj-phantoms-dataset-201812061411\digital\2.16.840.1.113669.632.20.20130917.192726317.17.381"
@@ -55,7 +56,10 @@ plt.close('all')
 
 
 #redim
-    
+[n,p]=np.shape(im)
+if np.mean(im[n//2-10:n//2+10 , 0:20]) > np.mean(im[n//2-10:n//2+10 , p-21:p-1]) :
+     im=-im+np.max(im)
+  
 im_red=redim_im(im)
 [n,p]=np.shape(im_red)
 
@@ -67,11 +71,11 @@ fibre_F1=isoler(im_red, [0.11,0.22], [0.70,0.86])
 
 
 # traitement fibre F1
-fibre_F1_inverted=linear(fibre_F1, -1, 10000)
 
 
-fibre_F1_inverted=equalize_adapthist(fibre_F1_inverted)
-fftc_highpass=highpass_filter(fibre_F1_inverted,Dc=5)
+
+fibre_F1=equalize_adapthist(fibre_F1)
+fftc_highpass=highpass_filter(fibre_F1,Dc=5)
 fft_highpass=np.fft.ifftshift(fftc_highpass)
 invfft_highpass=np.real(np.fft.ifft2(fft_highpass))
 
@@ -91,7 +95,12 @@ plt.show()
 
 #traitement fibre F5
 
-fftc_highpass=highpass_filter(fibre_F5_inverted,Dc=5)
+#fibre F5
+fibre_F5=isoler(im, [0.24,0.31], [0.80,0.90])
+fibre_F5=equalize_adapthist(fibre_F5) 
+#plt.imshow(ds.pixel_array, cmap=plt.cm.bone) 
+
+fftc_highpass=highpass_filter(fibre_F5,Dc=5)
 fft_highpass=np.fft.ifftshift(fftc_highpass)
 invfft_highpass=np.real(np.fft.ifft2(fft_highpass))
 
@@ -134,7 +143,6 @@ plt.plot([0,p], [m, m])
 plt.plot([x_bas, x_bas,x_haut, x_haut, x_bas], [y_matblanc_bas, y_matblanc_haut, y_matblanc_haut, y_matblanc_bas,y_matblanc_bas])
 plt.plot([x_bas, x_bas,x_haut, x_haut, x_bas], [y_matnoir_bas, y_matnoir_haut, y_matnoir_haut, y_matnoir_bas, y_matnoir_bas])
 plt.show()
-
 
 
 
