@@ -4,15 +4,50 @@ Created on Wed Feb 13 22:54:45 2019
 
 @author: Gauthier Frecon
 
-à faire: 
-    
--voir seuil générale
--fair une étude détaillée sur une iamge de ref (à moitié déja fait)
+#à faire: 
 
--calculer pr chaque image les valeurs moyenne de la glande et de la graisse (àmoitié ok)
+
+-mise au propre fonction pour isoler les zones
+coupage au mamelon presque ok sauf pr planmed
+coupage sur les billes assez précis ?
+sur l'axe p plus compliqué
+proportion et zones des fibres différents entre les phantom différents?
+-étude autres fibres (F1-F6)
+
+
+#facultatif:
+-valeurs moyenne de la glande et de la graisse peut-etre à exploiter(à moitié ok)
 -seuil en fonctio du tiret au dessus (pas à faire si yen marche)
+-mettre au propre redim_im (la fonction marche dnc pas obligé)
 
--mettre au propre redim
+#remarques/questions:
+-fuji: angle de 150° mieux que 135 car la fibre est mal positionné.
+-on a pas fait de débruitages globales, quand on remarque l'etat de l'art, c'est bcp mieux...
+-seuil zones du milieu: marche pas super bien parce que yen est adpaté à la zone de la fibre
+-lire papier de yen: compliqué...
+-est ce que je selectionne la composante connexe la plus grosse (pb résidu avec yen)
+
+-Angles des billes
+planmed
+90.63 en haut
+90 en bas
+
+fuji
+89.59 (en haut)
+92.27  (en bas)
+91.71  (en bas)
+
+ge
+91.5 en haut
+90 en bas
+88.59 en bas
+
+hologic
+88.9 en haut 
+90 pile en bas
+89.32 en bas
+
+
 
 """
 
@@ -58,30 +93,34 @@ ds = pydicom.dcmread(chemin)
 imref_ge=ds.pixel_array
 F1_ge=pipeline_segm_fibre(imref_ge,zone_fibre_n=[0.10,0.21], zone_fibre_p=[0.66,0.83])
 
+
+
 # hologic
 chemin=IMDIR_hologic + "/" + nom_imref_hologic
 ds = pydicom.dcmread(chemin)
 imref_hologic=ds.pixel_array
-F1_hologic=pipeline_segm_fibre(imref_hologic,zone_fibre_n=[0.09,0.20], zone_fibre_p=[0.68,0.84]) 
+F1_hologic=pipeline_segm_fibre(imref_hologic) #) #,zone_fibre_n=[0.09,0.20], zone_fibre_p=[0.68,0.84]) 
 
 #fuji
 chemin=IMDIR_fuji + "/" + nom_imref_fuji
 ds = pydicom.dcmread(chemin)
 imref_fuji=ds.pixel_array
-np.save("imref_fuji.npy", imref_fuji)
-F1_fuji=pipeline_segm_fibre(imref_fuji,zone_fibre_n=[0.07,0.15], zone_fibre_p=[0.66,0.81]) #, seuil2=80)
+F1_fuji=pipeline_segm_fibre(imref_fuji ,zone_fibre_n=[0.07,0.15], zone_fibre_p=[0.66,0.81]) #, seuil2=80) #mettre un angle de 150 pour faire un truc propre (angle de 60 deg au lieu de 45 deg)
 
 
 
 
-plt.close('all')
-plt.figure(1)
-plt.imshow(redim_im(imref_ge), cmap='gray')
-plt.show()
-
-plt.figure(2)
-plt.imshow(redim_im(-imref_planmed+np.max(imref_planmed)))
-plt.show()
+##
+#plt.close('all')
+#plt.figure(1)
+#
+#ims=skimage.filters.sobel(imref_hologic)
+#plt.imshow(ims)
+#plt.show()
+#
+#plt.figure(2)
+#plt.imshow(redim_im(-imref_planmed+np.max(imref_planmed)), cmap='gray')
+#plt.show()
 
 
 
