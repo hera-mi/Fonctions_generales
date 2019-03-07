@@ -32,6 +32,7 @@ from skimage.restoration import denoise_nl_means, estimate_sigma
 #from Filtres import *
 import cv2
 from skimage import img_as_ubyte
+import matplotlib.image as mpimg
 
 from Fct_generales import *
 
@@ -272,21 +273,24 @@ binary_global = d > global_thresh
 
 masses_contloc=skimage.exposure.equalize_adapthist(masses)
 
-def pipeline1(im,block_size = 8,sig=im.std()):
+def pipeline1(im,block_size = 8,sig=8):
     #im=ndimage.convolve(masses,gradlap()[2])
     im_contloc=skimage.exposure.equalize_adapthist(im)
     im=ndimage.convolve(im_contloc,gaussianKernel(block_size,sig))
     #im=skimage.filters.gaussian(im)
     #im_contloc=skimage.exposure.equalize_adapthist(im)
     im_med=scipy.signal.medfilt(im,7)
+    
     im_contloc=skimage.exposure.equalize_adapthist(im_med)
     im_eq=skimage.exposure.equalize_hist(im_contloc)
     #im=skimage.filters.sobel(im_eq)-im_eq  #Ca marche pas mal en ajoutant ca
+    sigma_est = np.mean(estimate_sigma(im_eq, multichannel=True))
     im_nl = denoise_nl_means(im_eq, h=1.15 * sigma_est, fast_mode=False,
                            **patch_kw)
     im_med=scipy.signal.medfilt(im_nl,7)
     im=skimage.filters.gaussian(im_med)
     im=scipy.signal.medfilt(im,7)
+    #plt.imshow(im)
     #im_thresh = threshold_adaptive(im_nl, block_size, offset=0)
     #global_thresh = threshold_otsu(im_nl)
     #im_thresh = im_nl > global_thresh
@@ -300,6 +304,11 @@ def pipeline1(im,block_size = 8,sig=im.std()):
     #plt.imshow(imt)
     #skimage.filters.try_all_threshold(im)
     #plt.show()
+
+#essayer les correlations
+    #essayer de beaucoup flouter
+    #Faire un score!!! Il faut des chiffres*
+    #essayer un filtre binaire
 
 def pipeline2(im,block_size = 8,sig=8):
     #im=ndimage.convolve(masses,gradlap()[2])
@@ -316,6 +325,7 @@ def pipeline2(im,block_size = 8,sig=8):
     #im_contloc=skimage.exposure.equalize_adapthist(im_med)  #ca marche pas dans ce sens
     im_eq=skimage.exposure.equalize_hist(im_med)
     #hp=skimage.filters.laplace(im_eq,10)
+    sigma_est = np.mean(estimate_sigma(im, multichannel=True))
     im_nl = denoise_nl_means(im_eq, h=1.15 * sigma_est, fast_mode=False,
                            **patch_kw)
     im_med=scipy.signal.medfilt(im_nl,7)
@@ -337,16 +347,18 @@ def pipeline2(im,block_size = 8,sig=8):
     #plt.show()
     return(imt)
     
-def pipeline3(im,block_size = 8,sig=im.std()):
+def pipeline3(im,block_size = 8,sig=8):
     #im=ndimage.convolve(masses,gradlap()[2])
     im_contloc=skimage.exposure.equalize_adapthist(im)
     im=ndimage.convolve(im_contloc,gaussianKernel(block_size,sig))
     #im=skimage.filters.gaussian(im)
     #im_contloc=skimage.exposure.equalize_adapthist(im)
     im_med=scipy.signal.medfilt(im,7)
+    
     im_contloc=skimage.exposure.equalize_adapthist(im_med)
     im_eq=skimage.exposure.equalize_hist(im_contloc)
     im=skimage.filters.sobel(im_eq)-im_eq  #Ca marche pas mal en ajoutant ca
+    sigma_est = np.mean(estimate_sigma(im, multichannel=True))
     im_nl = denoise_nl_means(im, h=1.15 * sigma_est, fast_mode=False,
                            **patch_kw)
     im_med=scipy.signal.medfilt(im_nl,7)
@@ -373,6 +385,7 @@ def pipeline4(im,block_size = 8,sig=im.std()):
     im_contloc=skimage.exposure.equalize_adapthist(im_med)
     im_eq=skimage.exposure.equalize_hist(im_contloc)
     im=skimage.filters.sobel(im_eq)-im_eq  #Ca marche pas mal en ajoutant ca
+    sigma_est = np.mean(estimate_sigma(im, multichannel=True))
     im_nl = denoise_nl_means(im, h=1.15 * sigma_est, fast_mode=False,
                            **patch_kw)
     im_med=scipy.signal.medfilt(im_nl,7)
@@ -398,15 +411,16 @@ def pipeline_moy(im,block_size = 8,sig=8):
     #im=ndimage.convolve(masses,gradlap()[2])
     im_contloc=skimage.exposure.equalize_adapthist(im)
     im=ndimage.convolve(im_contloc,gaussianKernel(block_size,sig))
-    im2=ndimage.convolve(im,gaussianKernel(2*block_size,2*sig))
-    im3=ndimage.convolve(im2,gaussianKernel(4*block_size,4*sig))
+    #im2=ndimage.convolve(im,gaussianKernel(2*block_size,2*sig))
+    #im3=ndimage.convolve(im2,gaussianKernel(4*block_size,4*sig))
     
     #im=skimage.filters.gaussian(im)
     #im_contloc=skimage.exposure.equalize_adapthist(im)
-    im_med=scipy.signal.medfilt(im3,7)
+    im_med=scipy.signal.medfilt(im,7)
     #im_contloc=skimage.exposure.equalize_adapthist(im_med)
     im_eq=skimage.exposure.equalize_hist(im_contloc)
     im=skimage.filters.sobel(im_eq)-im_eq  #Ca marche pas mal en ajoutant ca
+    sigma_est = np.mean(estimate_sigma(im, multichannel=True))
     im_nl = denoise_nl_means(im, h=1.15 * sigma_est, fast_mode=False,
                            **patch_kw)
     im_med=scipy.signal.medfilt(im_nl,7)
@@ -465,6 +479,8 @@ def detection(DIR):
 def normalisation(im):
     m=np.max(im)
     return(im/m)
+
+#Tester l'équalization
   
 im1=pydicom.dcmread(DIR+"2.16.840.1.113669.632.20.20140513.202406491.200064.424.dcm")
 #im1=rotation(im1.pixel_array)
@@ -491,6 +507,11 @@ masses4=isoler(redim_im_bis(im4.pixel_array),[0.603,0.722],[0.436,0.9])
 masses4=normalisation(masses4)
 
 
+Fond1=normalisation(skimage.color.rgb2gray(io.imread("./Fond_1.png")))
+Fond2=normalisation(skimage.color.rgb2gray(io.imread("./Fond_2.png")))
+Fond3=normalisation(skimage.color.rgb2gray(io.imread("./Fond_3.png")))
+Fond4=normalisation(skimage.color.rgb2gray(io.imread("./Fond_4.png")))
+
 def test1():
 
     plt.figure(1)
@@ -502,7 +523,7 @@ def test1():
     print("L'image de Medplan a une moyenne de {}, \n un écart-type de {},\n un contraste de {},"
           "\n un rapport ecart-type / moyenne de {},\n une skewness de {}, \n et un kurtosis de {}".format(np.mean(masses1),
           np.std(masses1-np.mean(masses1)),1-np.min(masses1),np.std(masses1)/np.mean(masses1),
-          scipy.stats.moment(masses1, moment=3, axis=None),scipy.stats.moment(masses1, moment=4, axis=None)))
+          scipy.stats.skew(masses1, axis=None),scipy.stats.kurtosis(masses1, axis=None)))
     plt.subplot(4,2,3)
     plt.imshow(masses2)
     plt.title("Hologic")
@@ -512,7 +533,7 @@ def test1():
           ",\n un rapport ecart-type / moyenne de {},\n une skewness de {}, \n et un kurtosis de {}"
           .format(np.mean(masses2),
           np.std(masses2-np.mean(masses2)),1-np.min(masses2),np.std(masses2)/np.mean(masses2),
-          scipy.stats.moment(masses2, moment=3, axis=None),scipy.stats.moment(masses2, moment=4, axis=None)))
+          scipy.stats.skew(masses2, axis=None),scipy.stats.kurtosis(masses2, axis=None)))
     plt.subplot(4,2,5)
     plt.imshow(masses3)
     plt.title("GE")
@@ -522,7 +543,7 @@ def test1():
           "\n un rapport ecart-type / moyenne de {},\n une skewness de {}, \n et un kurtosis de {}"
           .format(np.mean(masses3),
           np.std(masses3-np.mean(masses3)),1-np.min(masses3),np.std(masses3)/np.mean(masses3),
-          scipy.stats.moment(masses3, moment=3, axis=None),scipy.stats.moment(masses3, moment=4, axis=None)))
+          scipy.stats.skew(masses3, axis=None),scipy.stats.kurtosis(masses3, axis=None)))
     plt.subplot(4,2,7)
     plt.imshow(masses4)
     plt.title("Fuji")
@@ -531,8 +552,8 @@ def test1():
     print("L'image de Medplan a une moyenne de {}\n, un écart-type de {}\n, un contraste de {},"
           "\n un rapport ecart-type / moyenne de {},\n une skewness de {}, \n et un kurtosis de {}"
           .format(np.mean(masses4),
-          np.std(masses4-np.mean(masses4))),1-np.min(masses4),np.std(masses4)/np.mean(masses4),
-          scipy.stats.moment(masses4, moment=3, axis=None),scipy.stats.moment(masses4, moment=4, axis=None)))
+          np.std(masses4-np.mean(masses4)),1-np.min(masses4),np.std(masses4)/np.mean(masses4),
+          scipy.stats.skew(masses4, axis=None),scipy.stats.kurtosis(masses4, axis=None)))
     
     plt.figure(2)
     plt.subplot(4,2,1)
@@ -579,7 +600,7 @@ def test1():
     plt.imshow(pipeline3(masses4))
 
 
-hp=skimage.filters.laplace(masses,10)
+#hp=skimage.filters.laplace(masses,10)
 
 """
 plt.figure(4)
@@ -594,3 +615,134 @@ plt.subplot(4,1,4)
 plt.imshow(masses4)
 """
 #tenter de flouter beaucoup l'image, puis de trouver les masses?
+
+
+## Partie Correlation
+
+D1=skimage.morphology.selem.disk(20)
+D2=skimage.morphology.selem.disk(15)
+D3=skimage.morphology.selem.disk(10)
+D4=skimage.morphology.selem.disk(5)
+D5=skimage.morphology.selem.disk(3)
+C1=scipy.signal.correlate(D1,masses2)
+C2=scipy.signal.correlate(D2,masses2)
+C3=scipy.signal.correlate(D3,masses2)
+C4=scipy.signal.correlate(D4,masses2)
+C5=scipy.signal.correlate(D5,masses2)
+
+plt.subplot(5,1,1)
+plt.imshow(C1)
+plt.subplot(5,1,2)
+plt.imshow(C2)
+plt.subplot(5,1,3)
+plt.imshow(C3)
+plt.subplot(5,1,4)
+plt.imshow(C4)
+plt.subplot(5,1,5)
+plt.imshow(C5)
+
+def pipeline_corr(im,block_size = 8,sig=8,disk_size=5):
+    #im=ndimage.convolve(masses,gradlap()[2])
+    im_contloc=skimage.exposure.equalize_adapthist(im)
+    im=ndimage.convolve(im_contloc,gaussianKernel(block_size,sig))
+    #im2=ndimage.convolve(im,gaussianKernel(2*block_size,2*sig))
+    #im3=ndimage.convolve(im2,gaussianKernel(4*block_size,4*sig))
+    
+    #im=skimage.filters.gaussian(im)
+    #im_contloc=skimage.exposure.equalize_adapthist(im)
+    im_med=scipy.signal.medfilt(im,7)
+    #im_contloc=skimage.exposure.equalize_adapthist(im_med)
+    im_eq=skimage.exposure.equalize_hist(im_contloc)
+    im=skimage.filters.sobel(im_eq)-im_eq  #Ca marche pas mal en ajoutant ca
+    sigma_est = np.mean(estimate_sigma(im, multichannel=True))
+    im_nl = denoise_nl_means(im, h=1.15 * sigma_est, fast_mode=False,
+                           **patch_kw)
+    im_med=scipy.signal.medfilt(im_nl,7)
+    im=skimage.filters.gaussian(im_med)
+    im=scipy.signal.medfilt(im,7)
+    im_corr=scipy.signal.correlate(skimage.morphology.selem.disk(disk_size),im)
+    #skimage.filters.try_all_threshold(im_corr)
+    t=skimage.filters.threshold_minimum(im_corr)
+    imt=(im_corr>t).astype(int)
+    return(imt)
+    
+#Pour masses 1 : disk_size=7
+#Pour masses 2 : disk_size=10
+#Pour masses 3 : disk_size=3
+#Pour masses 4 : disk_size=14
+def test_corr(dep,fin,pas):
+    #Donner les tailles de début et de fin de la taille du disque avec lequel on correlle,
+    #ainsi que le pas avec lequel on le fait varier
+    assert((dep-fin)/pas is int, "impossible")
+    plt.subplot(4,(dep-fin)/pas,1)
+    plt.imshow(pipeline_corr(masses1,disk_size=3))
+    plt.subplot(4,(dep-fin)/pas,2)
+    plt.imshow(pipeline_corr(masses1,disk_size=7))
+    plt.subplot(4,(dep-fin)/pas,3)
+    plt.imshow(pipeline_corr(masses1,disk_size=10))
+    plt.subplot(4,(dep-fin)/pas,4)
+    plt.imshow(pipeline_corr(masses1,disk_size=14))
+    plt.subplot(4,(dep-fin)/pas,5)
+    plt.imshow(pipeline_corr(masses2,disk_size=3))
+    plt.subplot(4,(dep-fin)/pas,6)
+    plt.imshow(pipeline_corr(masses2,disk_size=7))
+    plt.subplot(4,(dep-fin)/pas,7)
+    plt.imshow(pipeline_corr(masses2,disk_size=10))
+    plt.subplot(4,(dep-fin)/pas,8)
+    plt.imshow(pipeline_corr(masses2,disk_size=14))
+    plt.subplot(4,(dep-fin)/pas,9)
+    plt.imshow(pipeline_corr(masses3,disk_size=3))
+    plt.subplot(4,(dep-fin)/pas,10)
+    plt.imshow(pipeline_corr(masses3,disk_size=7))
+    plt.subplot(4,(dep-fin)/pas,11)
+    plt.imshow(pipeline_corr(masses3,disk_size=10))
+    plt.subplot(4,(dep-fin)/pas,12)
+    plt.imshow(pipeline_corr(masses3,disk_size=14))
+    plt.subplot(4,(dep-fin)/pas,13)
+    plt.imshow(pipeline_corr(masses4,disk_size=3))
+    plt.subplot(4,(dep-fin)/pas,14)
+    plt.imshow(pipeline_corr(masses4,disk_size=7))
+    plt.subplot(4,(dep-fin)/pas,15)
+    plt.imshow(pipeline_corr(masses4,disk_size=10))
+    plt.subplot(4,(dep-fin)/pas,16)
+    plt.imshow(pipeline_corr(masses4,disk_size=14))
+    
+def test_corr(dep,fin,pas):
+    #Donner les tailles de début et de fin de la taille du disque avec lequel on correlle,
+    #ainsi que le pas avec lequel on le fait varier
+    assert((fin-dep)/pas is int, "impossible")
+    for i in range((fin-dep)//pas):
+        plt.subplot(4,(fin-dep)//pas,(i+1))
+        plt.imshow(pipeline_corr(masses1,disk_size=dep+i*pas))
+        plt.subplot(4,(fin-dep)//pas,(fin-dep)//pas+(i+1))
+        plt.imshow(pipeline_corr(masses2,disk_size=dep+i*pas))
+        plt.subplot(4,(fin-dep)//pas,2*(fin-dep)//pas+(i+1))
+        plt.imshow(pipeline_corr(masses3,disk_size=dep+i*pas))
+        plt.subplot(4,(fin-dep)//pas,3*(fin-dep)//pas+(i+1))
+        plt.imshow(pipeline_corr(masses4,disk_size=dep+i*pas))
+    plt.show()
+
+def pipeline_corr_light(im,block_size = 8,sig=8,disk_size=5):
+    im_contloc=skimage.exposure.equalize_adapthist(im)
+    im=ndimage.convolve(im_contloc,gaussianKernel(block_size,sig))
+    #im2=ndimage.convolve(im,gaussianKernel(2*block_size,2*sig))
+    #im3=ndimage.convolve(im2,gaussianKernel(4*block_size,4*sig))
+    
+    #im=skimage.filters.gaussian(im)
+    #im_contloc=skimage.exposure.equalize_adapthist(im)
+    im_med=scipy.signal.medfilt(im,7)
+    #im_contloc=skimage.exposure.equalize_adapthist(im_med)
+    im_eq=skimage.exposure.equalize_hist(im_contloc)
+    im=skimage.filters.sobel(im_eq)-im_eq  #Ca marche pas mal en ajoutant ca
+    #sigma_est = np.mean(estimate_sigma(im, multichannel=True))
+    #im_nl = denoise_nl_means(im, h=1.15 * sigma_est, fast_mode=False,**patch_kw)
+    im_med=scipy.signal.medfilt(im,7)
+    #im=skimage.filters.gaussian(im)
+    #im=scipy.signal.medfilt(im,7)
+    im_corr=scipy.signal.correlate(skimage.morphology.selem.disk(disk_size),im_med)
+    #skimage.filters.try_all_threshold(im_corr)
+    t=skimage.filters.threshold_minimum(im_corr)
+    imt=(im_corr>t).astype(int)
+    return(imt)
+    
+#[l,n]=scipy.ndimage.measurements.label(im) #<--- pour conter le nombre de masses trouvées
