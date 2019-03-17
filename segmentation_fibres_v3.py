@@ -20,7 +20,7 @@ import math
 from scipy import signal
 import skimage.io as io
 from skimage.transform import rotate
-
+from skimage.restoration import denoise_tv_chambolle, denoise_bilateral
 from Fct_generales import *
 
 #ouverture de l'image
@@ -102,20 +102,22 @@ plt.imshow(im_segmentation_F5, cmap='gray')
 plt.show()
 
 # traitement toute fibre  (marche pas parce que tous les bords du phantom perturbe l'algp)
-#
-#zone_fibres=isoler(im_red, [0.12,0.42], [0.29,0.85])
-#plt.imshow(zone_fibres, cmap='gray')
-#fftc_highpass=highpass_filter(zone_fibres,Dc=5)
+plt.close('all')
+zone_fibres=isoler(im_red,[0.12,0.42], [0.29,0.85]) 
+plt.imshow(zone_fibres, cmap='gray')
+zone_fibres=equalize_adapthist(zone_fibres)
+plt.imshow(zone_fibres, cmap='gray')
+#fftc_highpass=highpass_filter(zone_fibres,Dc=1)
 #fft_highpass=np.fft.ifftshift(fftc_highpass)
 #invfft_highpass=np.real(np.fft.ifft2(fft_highpass))
 #plt.figure()
-#plt.imshow(invfft_highpass[200:500,200:700], cmap='gray') # zone au milieu des fibres
-#im_filtree= scipy.signal.medfilt(skimage.restoration.denoise_nl_means(invfft_highpass[200:500,200:700])) 
-#plt.figure()
-#plt.imshow(im_filtree, cmap='gray')
-#
-#im_corr_I1=correlation_mask_I(im_filtree,3,40, seuil=5, angle=45) 
-#im_corr_I2=correlation_mask_I(im_filtree,4,60, seuil=26, angle=135) 
+#plt.imshow(invfft_highpass, cmap='gray') # zone au milieu des fibres
+im_filtree= zone_fibres#scipy.signal.medfilt(skimage.restoration.denoise_nl_means(  zone_fibres))#invfft_highpass)) 
+plt.figure()
+plt.imshow(im_filtree, cmap='gray')
+
+im_corr_I1=correlation_mask_I(im_filtree,3,40, seuil=5, angle=45) 
+im_corr_I2=correlation_mask_I(im_filtree,4,60, seuil=26, angle=135) 
 
 # zones carrés noir et blanc
 
