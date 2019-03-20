@@ -14,6 +14,7 @@ import math
 import scipy
 from scipy import signal
 from scipy import ndimage
+from skimage.restoration import denoise_bilateral
 import matplotlib.pyplot as plt
 import math
 import skimage.filters
@@ -275,23 +276,22 @@ A faire ?:
     #isolement fibre f1
     
     [fibre, im_mask]=isoler(im_red,im_mask, zone_fibre_n, zone_fibre_p)           
-    plt.figure()
-    plt.imshow(fibre)
-    plt.show()
-    plt.figure()
-    plt.imshow(im_mask)
-    plt.show()
 
   
     # traitement fibre 
 
     fibre=equalize_adapthist(fibre)
-    fftc_highpass=highpass_filter(fibre,Dc=5)
+    
+    zone_sigma=isoler(fibre, np.zeros_like(fibre),[0,0.1], [0,0.1])
+    sigma =np.mean(zone_sigma)
+    denoised = denoise_bilateral(fibre,win_size=3, sigma_color=sigma, sigma_spatial=4, multichannel=False)
+ 
+    fftc_highpass=highpass_filter(denoised,Dc=3)
     fft_highpass=np.fft.ifftshift(fftc_highpass)
     invfft_highpass=np.real(np.fft.ifft2(fft_highpass))
-    im_filtree=scipy.signal.medfilt(skimage.restoration.denoise_nl_means(invfft_highpass)) 
+    im_filtree=skimage.restoration.denoise_nl_means(invfft_highpass)
     plt.figure()
-    plt.imshow(invfft_highpass, cmap='gray')
+    plt.imshow(im_filtree, cmap='gray')
     plt.show()
     
     #corrélation
@@ -300,7 +300,7 @@ A faire ?:
     im_segmentation= (im_corr_I1+im_corr_I2)
     im_segmentation=im_segmentation.astype('float32')
     plt.figure()
-    plt.imshow(im_segmentation, cmap='gray')
+    plt.imshow(im_segmentation+im_mask, cmap='gray')
     plt.show()
     
     mesures=resultat(im_segmentation, im_mask)

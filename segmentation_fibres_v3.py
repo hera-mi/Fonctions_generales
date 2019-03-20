@@ -20,7 +20,7 @@ import math
 from scipy import signal
 import skimage.io as io
 from skimage.transform import rotate
-from skimage.restoration import denoise_tv_chambolle, denoise_bilateral
+from skimage.restoration import denoise_bilateral
 from Fct_generales import *
 
 #ouverture de l'image
