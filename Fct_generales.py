@@ -141,10 +141,11 @@ def correlation_mask_I(im, Lx, Ly, seuil, angle=45):
 #    plt.figure(2)
 #    plt.imshow(im_corr, cmap='gray')
 #    plt.show()
+    
     return(im_corr)
     
     
-def redim_im(im):
+def redim_im(im, im_mask):
     
     [n,p]=np.shape(im)
     #détection de la posistion du sein selon y (vertical)
@@ -158,16 +159,16 @@ def redim_im(im):
     pos_y=[y_haut, y_bas]  # le sein estv de la ligne y_haut à y_bas
     
     #détection de la position du sein selon x (horrizontal)
-    x=0
-    while im[n//2,x]<(mini+500) and im[n//2,1]<(mini+500): #on ne prend pas les images retourner car la fonction rotation change le tableau
-        x+=1
-    pos_x=[x, p] # le sein est de la colonne x à taille[1]         
+    xg=0
+    while im[n//2,xg]<(mini+500) and im[n//2,1]<(mini+500): #on ne prend pas les images retourner car la fonction rotation change le tableau
+        xg+=1
+    pos_x=[xg, p] # le sein est de la colonne x à taille[1]         
    
-    im_red=im[ y_haut:(n-y_bas-1),x:p-1]
-    
+    im_red=im[ y_haut:(n-y_bas-1), xg:p-1]
+    im_mask=im_mask[ y_haut:(n-y_bas-1), xg:p-1]
     
     taille=np.shape(im_red) 
-    return (im_red)
+    return (im_red, im_mask)
 
 def redim_im_bis(im,mask):
     
@@ -196,10 +197,54 @@ def redim_im_bis(im,mask):
         yd-=1
     return (im[:,yg:yd],mask[:,yg:yd])
 
+def resultat(im_segmentation, im_mask):
+    #analyse
+    eps = 1e-12
+    measures=dict()
+    
+    #nb de pixels = à 1 dans le mask
+    measures["N_mask"]=len(np.where(im_mask==1)[1])     
+    #nb de pixels = à 1 dans la segmentation
+    measures["N_segm"]=len(np.where(im_segmentation==1)[1])
+    
+    
+    TP=len(np.where(im_mask+im_segmentation==2)[1])
+    FP=len(np.where(im_segmentation-im_mask==1)[1])
+    TN=len(np.where(im_segmentation+im_mask==0)[1])
+    FN=len(np.where(im_segmentation-im_mask==-1)[1])
 
-def pipeline_segm_fibre(im, zone_fibre_n=[0.12,0.22], zone_fibre_p=[0.70,0.85], seuil1=28, seuil2=30):
-    '''segmente la fibres issue de zone_fibre, entée =image d'un fichier dicom
-     
+    # Accuracy
+    measures['accuracy'] = (TP+TN)/(TP+TN+FP+FN+eps)    
+    # Precision
+    measures['precision'] = TP/(TP+FP+eps)        
+    # Specificity
+    measures['specificity']=TN/(TN+FP+eps)    
+    # Recall
+    measures['recall'] = TP/(TP+FN+eps)   
+    # F-measure
+    measures['f1'] = 2*TP/(2*TP+FP+FN+eps)    
+    # Negative Predictive Value
+    measures['npv'] = TN/(TN+FN+eps)  
+    # False Predictive Value
+    measures['fpr'] = FP/(FP+TN+eps)
+
+
+    print('\n',
+          'nbpixels mask', measures['N_mask'], '\n',
+          'nbpixels segmentation', measures['N_segm'], '\n',
+          'Accuracy ', measures['accuracy'], '\n',
+          'Precision', measures['precision'], '\n',
+          'Recall', measures['recall'], '\n',
+          'Specificity ', measures['specificity'], '\n',
+          'F-measure', measures['f1'], '\n',
+          'NPV', measures['npv'],'\n',
+          'FPV', measures['fpr'],'\n'
+          ) 
+    return(measures)
+    
+    
+def pipeline_segm_fibre(im,  im_mask, zone_fibre_n=[0.12,0.22], zone_fibre_p=[0.70,0.85], seuil1=28, seuil2=30):
+    '''segmente la fibres issue de zone_fibre, entée =image d'un fichier dicom   
 pipeline :
 
 -inversion si nécessaire
@@ -215,6 +260,7 @@ pipeline :
 A faire ?:
     -faire une correlation plus propre en prenant les moyennes et en gérant la variance
     -Etiquettage des branches ?
+    -testter sobel
     '''
 
     #test inversion
@@ -223,17 +269,20 @@ A faire ?:
         im=-im+np.max(im)
         
     #redim
-    im_red=redim_im(im)
+    [im_red, im_mask]=redim_im(im, im_mask)
     [n,p]=np.shape(im_red)
-#    plt.figure()
-#    plt.imshow(im_red)
-#    plt.show()
 
-  
     #isolement fibre f1
     
-    fibre=isoler(im_red, zone_fibre_n, zone_fibre_p)           
-    
+    [fibre, im_mask]=isoler(im_red,im_mask, zone_fibre_n, zone_fibre_p)           
+    plt.figure()
+    plt.imshow(fibre)
+    plt.show()
+    plt.figure()
+    plt.imshow(im_mask)
+    plt.show()
+
+  
     # traitement fibre 
 
     fibre=equalize_adapthist(fibre)
@@ -249,12 +298,12 @@ A faire ?:
     im_corr_I1=correlation_mask_I(im_filtree,4,40, seuil=seuil1, angle=45) 
     im_corr_I2=correlation_mask_I(im_filtree,5,40, seuil=seuil2, angle=135) #4,20, seuil=193, angle=135)
     im_segmentation= (im_corr_I1+im_corr_I2)
+    im_segmentation=im_segmentation.astype('float32')
     plt.figure()
     plt.imshow(im_segmentation, cmap='gray')
     plt.show()
     
-    
-    return(im_segmentation)
-
+    mesures=resultat(im_segmentation, im_mask)
+    return(im_segmentation, im_mask, mesures)
 
 
