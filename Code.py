@@ -56,7 +56,7 @@ im= ds.pixel_array
 #plt.imshow(im3)
 
 
-    
+"""    
 masses=isoler(rotation(im),[0.35,0.43],[0.01,0.3])  
 masses_l=ndimage.convolve(masses,gaussianKernel(10,7)) #Sinon utiliser scipy.ndimage.filters.gaussian_filter
 masses_ll=ndimage.convolve(masses_l,gaussianKernel(10,7))
@@ -69,7 +69,7 @@ s = np.linspace(0, 2*np.pi, 400)
 x = 280 + 50*np.cos(s)
 y = 500 + 50*np.sin(s)
 init = np.array([x, y]).T
-"""
+
 snake = active_contour(massesbis_l,init, alpha=0.015, beta=10, gamma=0.001)
 fig, ax = plt.subplots(figsize=(7, 7))
 ax.imshow(massesbis_l, cmap=plt.cm.gray)
@@ -77,13 +77,13 @@ ax.plot(init[:, 0], init[:, 1], '--r', lw=3)
 ax.plot(snake[:, 0], snake[:, 1], '-b', lw=3)
 ax.set_xticks([]), ax.set_yticks([])
 ax.axis([0, masses.shape[1], masses.shape[0], 0])
-"""
+
 from skimage import img_as_ubyte
 cv_image = img_as_ubyte(masses)
 #np.uint8(masses)
 thresh=cv2.adaptiveThreshold(cv_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 101, 1)
 #https://pythonprogramming.net/thresholding-image-analysis-python-opencv-tutorial/
-
+"""
 def trouver_masses(im):
     cv_im = img_as_ubyte(im)
     #plt.imshow(cv_im)
@@ -101,13 +101,13 @@ def trouver_masses(im):
     return(imb,contours)
 #https://stackoverrun.com/fr/q/11610670    
     
-    
+""" 
 dirbis="D:/Documents/Travail/DATASIm/Projet/"
 imbis=io.imread(dirbis+"2.16.840.1.113669.632.20.20120425.94850094.200083.40.dcm.jpg")
 massesbis=isoler(rotation(imbis),[0.3,0.45],[0.01,0.36]) 
 
 massesbis_l=ndimage.convolve(massesbis,gaussianKernel(10,7))
-"""
+
 s = np.linspace(0, 2*np.pi, 400)
 xb = 180 + 50*np.cos(s)
 yb = 230 + 50*np.sin(s)
@@ -249,7 +249,7 @@ def rehausse(im,N):
                     
     
 #Tenter non local means
-   
+"""   
 patch_kw = dict(patch_size=5,      # 5x5 patches
                 patch_distance=6,  # 13x13 search area
                 multichannel=True)
@@ -272,7 +272,7 @@ global_thresh = threshold_otsu(d)
 binary_global = d > global_thresh
 
 masses_contloc=skimage.exposure.equalize_adapthist(masses)
-
+"""
 def pipeline1(im,block_size = 8,sig=8):
     #im=ndimage.convolve(masses,gradlap()[2])
     im_contloc=skimage.exposure.equalize_adapthist(im)
@@ -461,6 +461,7 @@ def gamma_cor(im):
 #Essayer de retirer certains filtres afin d'avoir moins de paramètres à regler, et d'être donc moins dépendant de l'image
     
 DIR="D:/Documents/Travail/DATASIm/Projet/Fonctions_generales/Masses test/"
+DIRMASK="D:/Documents/Travail/DATASIm/Projet/Fonctions_generales/MASK/"
 DIRBIS='./Masses test/'
 def detection(DIR):
     d={}
@@ -482,35 +483,59 @@ def normalisation(im):
 
 #Tester l'équalization
   
-im1=pydicom.dcmread(DIR+"2.16.840.1.113669.632.20.20140513.202406491.200064.424.dcm")
+im1=pydicom.dcmread(DIR+"2.16.840.1.113669.632.20.20130917.192819263.200064.384.dcm")
+m1=io.imread(DIRMASK+"PM_mask.png")
 #im1=rotation(im1.pixel_array)
 #masses1=isoler(im1,[0.37,0.46],[0.05,0.29])    
-masses1=isoler(redim_im_bis(im1.pixel_array),[0.603,0.722],[0.436,0.9])
+[masses1,mask1]=redim_im_bis(im1.pixel_array,m1)
+[masses1,mask1]=isoler(masses1,mask1,[0.603,0.722],[0.436,0.9])
 masses1=normalisation(masses1)
 
 im2=pydicom.dcmread(DIR+"hologic-MG02.dcm")
+m2=io.imread(DIRMASK+"Hologic_mask.png")
 #im2=rotation(im2.pixel_array)
 #masses2=isoler(im2,[0.355,0.445],[0.05,0.29])
-masses2=isoler(redim_im_bis(im2.pixel_array),[0.603,0.722],[0.436,0.9])
+[masses2,mask2]=redim_im_bis(im2.pixel_array,m2)
+[masses2,mask2]=isoler(masses2,mask2,[0.603,0.722],[0.436,0.9])
 masses2=normalisation(masses2)
 
 im3=pydicom.dcmread(DIR+"ge-0001-0000-00000000.dcm")
+m3=io.imread(DIRMASK+"GE_mask.png")
 #im3=rotation(im3.pixel_array)
 #masses3=isoler(im3,[0.32,0.4021],[0.05,0.29])
-masses3=isoler(redim_im_bis(im3.pixel_array),[0.603,0.722],[0.436,0.9])
+[masses3,mask3]=redim_im_bis(im3.pixel_array,m3)
+[masses3,mask3]=isoler(masses3,mask3,[0.603,0.722],[0.436,0.9])
 masses3=normalisation(masses3)
 
 im4=pydicom.dcmread(DIR+"1.2.392.200036.9125.4.0.2718896371.50333032.466243176.dcm")
+m4=io.imread(DIRMASK+"FUJI_mask.png")
 #im4=rotation(im4.pixel_array)
 #masses4=isoler(im4,[0.35,0.44],[0.05,0.29])
-masses4=isoler(redim_im_bis(im4.pixel_array),[0.603,0.722],[0.436,0.9])
+[masses4,mask4]=redim_im_bis(im4.pixel_array,m4)
+[masses4,mask4]=isoler(masses4,mask4,[0.603,0.722],[0.436,0.9])
 masses4=normalisation(masses4)
 
 
+"""
+fond1=ndimage.convolve(masses1,meanKernel(101))
+np.save("fond1.npy",fond1)
+fond2=ndimage.convolve(masses2,meanKernel(101))
+np.save("fond1.npy",fond2)
+fond3=ndimage.convolve(masses3,meanKernel(101))
+np.save("fond1.npy",fond3)
+fond4=ndimage.convolve(masses4,meanKernel(101))
+np.save("fond1.npy",fond4)
+
+#np.load("random-matrix.npy")
+
+
+"""
 Fond1=normalisation(skimage.color.rgb2gray(io.imread("./Fond_1.png")))
 Fond2=normalisation(skimage.color.rgb2gray(io.imread("./Fond_2.png")))
 Fond3=normalisation(skimage.color.rgb2gray(io.imread("./Fond_3.png")))
 Fond4=normalisation(skimage.color.rgb2gray(io.imread("./Fond_4.png")))
+
+#utiliser numpy save, ou sauvegarder en noir et blanc
 
 def test1():
 
@@ -618,7 +643,7 @@ plt.imshow(masses4)
 
 
 ## Partie Correlation
-
+"""
 D1=skimage.morphology.selem.disk(20)
 D2=skimage.morphology.selem.disk(15)
 D3=skimage.morphology.selem.disk(10)
@@ -640,7 +665,7 @@ plt.subplot(5,1,4)
 plt.imshow(C4)
 plt.subplot(5,1,5)
 plt.imshow(C5)
-
+"""
 def pipeline_corr(im,block_size = 8,sig=8,disk_size=5):
     #im=ndimage.convolve(masses,gradlap()[2])
     im_contloc=skimage.exposure.equalize_adapthist(im)
@@ -670,42 +695,7 @@ def pipeline_corr(im,block_size = 8,sig=8,disk_size=5):
 #Pour masses 2 : disk_size=10
 #Pour masses 3 : disk_size=3
 #Pour masses 4 : disk_size=14
-def test_corr(dep,fin,pas):
-    #Donner les tailles de début et de fin de la taille du disque avec lequel on correlle,
-    #ainsi que le pas avec lequel on le fait varier
-    assert((dep-fin)/pas is int, "impossible")
-    plt.subplot(4,(dep-fin)/pas,1)
-    plt.imshow(pipeline_corr(masses1,disk_size=3))
-    plt.subplot(4,(dep-fin)/pas,2)
-    plt.imshow(pipeline_corr(masses1,disk_size=7))
-    plt.subplot(4,(dep-fin)/pas,3)
-    plt.imshow(pipeline_corr(masses1,disk_size=10))
-    plt.subplot(4,(dep-fin)/pas,4)
-    plt.imshow(pipeline_corr(masses1,disk_size=14))
-    plt.subplot(4,(dep-fin)/pas,5)
-    plt.imshow(pipeline_corr(masses2,disk_size=3))
-    plt.subplot(4,(dep-fin)/pas,6)
-    plt.imshow(pipeline_corr(masses2,disk_size=7))
-    plt.subplot(4,(dep-fin)/pas,7)
-    plt.imshow(pipeline_corr(masses2,disk_size=10))
-    plt.subplot(4,(dep-fin)/pas,8)
-    plt.imshow(pipeline_corr(masses2,disk_size=14))
-    plt.subplot(4,(dep-fin)/pas,9)
-    plt.imshow(pipeline_corr(masses3,disk_size=3))
-    plt.subplot(4,(dep-fin)/pas,10)
-    plt.imshow(pipeline_corr(masses3,disk_size=7))
-    plt.subplot(4,(dep-fin)/pas,11)
-    plt.imshow(pipeline_corr(masses3,disk_size=10))
-    plt.subplot(4,(dep-fin)/pas,12)
-    plt.imshow(pipeline_corr(masses3,disk_size=14))
-    plt.subplot(4,(dep-fin)/pas,13)
-    plt.imshow(pipeline_corr(masses4,disk_size=3))
-    plt.subplot(4,(dep-fin)/pas,14)
-    plt.imshow(pipeline_corr(masses4,disk_size=7))
-    plt.subplot(4,(dep-fin)/pas,15)
-    plt.imshow(pipeline_corr(masses4,disk_size=10))
-    plt.subplot(4,(dep-fin)/pas,16)
-    plt.imshow(pipeline_corr(masses4,disk_size=14))
+
     
 def test_corr(dep,fin,pas):
     #Donner les tailles de début et de fin de la taille du disque avec lequel on correlle,
@@ -746,3 +736,37 @@ def pipeline_corr_light(im,block_size = 8,sig=8,disk_size=5):
     return(imt)
     
 #[l,n]=scipy.ndimage.measurements.label(im) #<--- pour conter le nombre de masses trouvées
+#im1.ImagerPixelSpacing
+#On va prendre un disuqe de taille 0.75
+
+def pipeline_finale(taille_masse=0.75):
+    """D1=round(0.75/im1.ImagerPixelSpacing[0])
+    D2=round(0.75/im2.ImagerPixelSpacing[0])
+    D3=round(0.75/im3.ImagerPixelSpacing[0])
+    D4=round(0.75/im4.ImagerPixelSpacing[0])"""
+    D4=round(0.75/im4.ImagerPixelSpacing[0])
+    #On fixe le bon rayon à avoir pour im4, et ensuite on ajuste les autres proportionellement au carré
+    #du rapport des pixels, parceque l'on considère des volumes
+    D1=round(D4*(1/im1.ImagerPixelSpacing[0]*im4.ImagerPixelSpacing[0])**2)
+    D2=round(D4*(1/im2.ImagerPixelSpacing[0]*im4.ImagerPixelSpacing[0])**2)
+    D3=round(D4*(1/im3.ImagerPixelSpacing[0]*im4.ImagerPixelSpacing[0])**2)
+    res1=pipeline_corr(masses1,disk_size=D1)
+    res2=pipeline_corr(masses2,disk_size=D2)
+    res3=pipeline_corr(masses3,disk_size=D3)
+    res4=pipeline_corr(masses4,disk_size=D4)
+    [l1,n1]=scipy.ndimage.measurements.label(res1)
+    [l2,n2]=scipy.ndimage.measurements.label(1-res2)
+    [l3,n3]=scipy.ndimage.measurements.label(1-res3)
+    [l4,n4]=scipy.ndimage.measurements.label(res4)
+    plt.subplot(4,1,1)
+    plt.imshow(l1)
+    plt.subplot(4,1,2)
+    plt.imshow(l2)
+    plt.subplot(4,1,3)
+    plt.imshow(l3)
+    plt.subplot(4,1,4)
+    plt.imshow(l4)
+    return(n1,n2,n3,n4)
+    
+#Il faut faire 1-res2/3
+    
