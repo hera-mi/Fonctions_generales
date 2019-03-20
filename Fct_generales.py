@@ -132,19 +132,19 @@ def correlation_mask_I(im, Lx, Ly, seuil, angle=45):
 #    plt.plot(x[:-1], y)
 #    plt.show()
 
-    #skimage.filters.try_all_threshold(corr_mask)
+    skimage.filters.try_all_threshold(corr_mask)
     seuil=skimage.filters.threshold_yen(corr_mask)
-#    plt.figure(3)
-#    plt.imshow(corr_mask, cmap='gray')
-#    plt.show()
+    plt.figure()
+    plt.imshow(corr_mask, cmap='gray')
+    plt.show()
     im_corr=corr_mask>seuil
-#    plt.figure(2)
+#    plt.figure()
 #    plt.imshow(im_corr, cmap='gray')
 #    plt.show()
     return(im_corr)
     
     
-def redim_im(im):
+def redim_im(im, im_mask):
     
     [n,p]=np.shape(im)
     #détection de la posistion du sein selon y (vertical)
@@ -158,16 +158,16 @@ def redim_im(im):
     pos_y=[y_haut, y_bas]  # le sein estv de la ligne y_haut à y_bas
     
     #détection de la position du sein selon x (horrizontal)
-    x=0
-    while im[n//2,x]<(mini+500) and im[n//2,1]<(mini+500): #on ne prend pas les images retourner car la fonction rotation change le tableau
-        x+=1
-    pos_x=[x, p] # le sein est de la colonne x à taille[1]         
+    xg=0
+    while im[n//2,xg]<(mini+500) and im[n//2,1]<(mini+500): #on ne prend pas les images retourner car la fonction rotation change le tableau
+        xg+=1
+    pos_x=[xg, p] # le sein est de la colonne x à taille[1]         
    
-    im_red=im[ y_haut:(n-y_bas-1),x:p-1]
-    
+    im_red=im[ y_haut:(n-y_bas-1),xg:p-1]
+    im_mask=im_mask[ y_haut:(n-y_bas-1),xg:p-1]
     
     taille=np.shape(im_red) 
-    return (im_red)
+    return (im_red, im_mask)
 
 def redim_im_bis(im):
     
@@ -196,7 +196,7 @@ def redim_im_bis(im):
     return (im[:,yg:yd])
 
 
-def pipeline_segm_fibre(im, zone_fibre_n=[0.12,0.22], zone_fibre_p=[0.70,0.85], seuil1=28, seuil2=30):
+def pipeline_segm_fibre(im,  im_mask, zone_fibre_n=[0.12,0.22], zone_fibre_p=[0.70,0.85], seuil1=28, seuil2=30):
     '''segmente la fibres issue de zone_fibre, entée =image d'un fichier dicom
      
 pipeline :
@@ -214,6 +214,7 @@ pipeline :
 A faire ?:
     -faire une correlation plus propre en prenant les moyennes et en gérant la variance
     -Etiquettage des branches ?
+    -testter sobel
     '''
 
     #test inversion
@@ -222,17 +223,20 @@ A faire ?:
         im=-im+np.max(im)
         
     #redim
-    im_red=redim_im(im)
+    [im_red, im_mask]=redim_im(im, im_mask)
     [n,p]=np.shape(im_red)
-#    plt.figure()
-#    plt.imshow(im_red)
-#    plt.show()
-
+    plt.figure()
+    plt.imshow(isoler(im_red,[0.11,0.23], [0.69,0.86]))
+    plt.show()
+    plt.figure()
+    plt.imshow(isoler(im_mask,[0.11,0.23], [0.69,0.86]))
+    plt.show()
+    a=1
   
     #isolement fibre f1
     
     fibre=isoler(im_red, zone_fibre_n, zone_fibre_p)           
-    
+    im_mask=isoler(im_mask, zone_fibre_n, zone_fibre_p) 
     # traitement fibre 
 
     fibre=equalize_adapthist(fibre)
@@ -248,12 +252,14 @@ A faire ?:
     im_corr_I1=correlation_mask_I(im_filtree,4,40, seuil=seuil1, angle=45) 
     im_corr_I2=correlation_mask_I(im_filtree,5,40, seuil=seuil2, angle=135) #4,20, seuil=193, angle=135)
     im_segmentation= (im_corr_I1+im_corr_I2)
+    im_segmentation=im_segmentation.astype('float32')
     plt.figure()
     plt.imshow(im_segmentation, cmap='gray')
     plt.show()
     
     
-    return(im_segmentation)
+    return(im_segmentation, im_mask)
 
-
+#def resultat(segm, mask):
+    
 

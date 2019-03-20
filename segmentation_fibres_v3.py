@@ -65,57 +65,117 @@ fibre_F1=isoler(im_red, [0.11,0.22], [0.70,0.86])
 
 
 # traitement fibre F1
-
-
-
 fibre_F1=equalize_adapthist(fibre_F1)
-fftc_highpass=highpass_filter(fibre_F1,Dc=5)
+plt.figure()
+plt.imshow(fibre_F1, cmap='gray')
+plt.show()
+
+sigma=np.mean(isoler(fibre_F1,[0,0.1], [0,0.1]))
+denoised = denoise_bilateral(fibre_F1,sigma_color=sigma, sigma_spatial=4, multichannel=False)
+plt.figure()
+plt.imshow(denoised, cmap='gray')
+plt.show()
+
+fftc_highpass=highpass_filter(denoised,Dc=3)
 fft_highpass=np.fft.ifftshift(fftc_highpass)
 invfft_highpass=np.real(np.fft.ifft2(fft_highpass))
-im_filtree=scipy.signal.medfilt(skimage.restoration.denoise_nl_means(invfft_highpass))
+
+plt.figure()
+plt.imshow(invfft_highpass, cmap='gray')
+plt.show()
+
+
+im_filtree=skimage.restoration.denoise_nl_means(invfft_highpass)
+plt.figure()
+plt.imshow(im_filtree, cmap='gray')
+plt.show()
 
 
 im_corr_I1=correlation_mask_I(im_filtree,4,40, seuil=31, angle=45) 
 im_corr_I2=correlation_mask_I(im_filtree,5,40, seuil=26, angle=135) #4,20, seuil=193, angle=135)
 
 im_segmentation_F1= (im_corr_I1+im_corr_I2)
-plt.figure(2)
+plt.figure()
 plt.imshow(im_segmentation_F1, cmap='gray')
 plt.show()
 
 #traitement fibre F5
 
 #fibre F5
+
 fibre_F5=isoler(im, [0.24,0.31], [0.80,0.90])
+
+
 fibre_F5=equalize_adapthist(fibre_F5) 
+plt.figure()
+plt.imshow(fibre_F5, cmap='gray')
+plt.show()
+
 #plt.imshow(ds.pixel_array, cmap=plt.cm.bone) 
 
-fftc_highpass=highpass_filter(fibre_F5,Dc=5)
+sigma=np.mean(isoler(fibre_F5,[0,0.1], [0,0.1]))
+denoised = denoise_bilateral(fibre_F5,win_size=5, sigma_color=sigma, sigma_spatial=4, multichannel=False)
+plt.figure()
+plt.imshow(denoised, cmap='gray')
+plt.show()
+
+fftc_highpass=highpass_filter(denoised,Dc=3)
 fft_highpass=np.fft.ifftshift(fftc_highpass)
 invfft_highpass=np.real(np.fft.ifft2(fft_highpass))
-im_filtree=scipy.signal.medfilt(skimage.restoration.denoise_nl_means(invfft_highpass)) 
+plt.figure()
+plt.imshow(invfft_highpass, cmap='gray')
+plt.show()
+
+im_filtree=skimage.restoration.denoise_nl_means(invfft_highpass)
+plt.figure()
+plt.imshow(im_filtree, cmap='gray')
+plt.show()
+
 im_corr_I1=correlation_mask_I(im_filtree,3,40, seuil=28, angle=45) 
 im_corr_I2=correlation_mask_I(im_filtree,4,60, seuil=26, angle=135) 
 im_segmentation_F5= (im_corr_I1+im_corr_I2)
-plt.figure(4)
+plt.figure()
 plt.imshow(im_segmentation_F5, cmap='gray')
 plt.show()
 
+
+
 # traitement toute fibre  (marche pas parce que tous les bords du phantom perturbe l'algp)
+
 plt.close('all')
+
 zone_fibres=isoler(im_red,[0.12,0.42], [0.29,0.85]) 
-plt.imshow(zone_fibres, cmap='gray')
-zone_fibres=equalize_adapthist(zone_fibres)
-plt.imshow(zone_fibres, cmap='gray')
-#fftc_highpass=highpass_filter(zone_fibres,Dc=1)
-#fft_highpass=np.fft.ifftshift(fftc_highpass)
-#invfft_highpass=np.real(np.fft.ifft2(fft_highpass))
+[n,p]=np.shape(zone_fibres)
+for i in range(n):
+    for j in range(p):
+        if (-i)>(-370 +(380/370)*j) or (-i)<((n-500)/(p-350)*j-900) :
+            zone_fibres[i,j]=0
+
+
 #plt.figure()
-#plt.imshow(invfft_highpass, cmap='gray') # zone au milieu des fibres
-im_filtree= zone_fibres#scipy.signal.medfilt(skimage.restoration.denoise_nl_means(  zone_fibres))#invfft_highpass)) 
+#plt.imshow(zone_fibres, cmap='gray')
+#plt.show()
+plt.close('all')
+zone_fibres=equalize_adapthist(zone_fibres)
+plt.figure()
+plt.imshow(zone_fibres, cmap='gray')
+plt.show()
+
+sigma=np.mean(isoler(zone_fibres,[0.8,0.9], [0.4,0.5]))
+denoised = denoise_bilateral(zone_fibres,win_size=3, sigma_color=0.2, sigma_spatial=4, multichannel=False)
+plt.figure()
+plt.imshow(denoised, cmap='gray')
+plt.show()
+fftc_highpass=highpass_filter(denoised,Dc=3)
+fft_highpass=np.fft.ifftshift(fftc_highpass)
+invfft_highpass=np.real(np.fft.ifft2(fft_highpass))
+plt.figure()
+plt.imshow(invfft_highpass, cmap='gray') # zone au milieu des fibres
+plt.show()
+im_filtree=skimage.restoration.denoise_nl_means(denoised, patch_distance=2)#scipy.signal.medfilt(skimage.restoration.denoise_nl_means(  zone_fibres))#invfft_highpass)) 
 plt.figure()
 plt.imshow(im_filtree, cmap='gray')
-
+plt.show()
 im_corr_I1=correlation_mask_I(im_filtree,3,40, seuil=5, angle=45) 
 im_corr_I2=correlation_mask_I(im_filtree,4,60, seuil=26, angle=135) 
 
@@ -131,15 +191,15 @@ y_matnoir_haut=m+125+30
 
 
 
-moyenne_matblanc=np.mean(im_red[y_matblanc_bas: y_matblanc_haut, x_bas:x_haut])
-moyenne_matnoir=np.mean(im_red[y_matnoir_bas: y_matnoir_haut, x_bas:x_haut])              
-
-plt.figure()
-plt.imshow(im_red, cmap='gray')
-plt.plot([0,p], [m, m])
-plt.plot([x_bas, x_bas,x_haut, x_haut, x_bas], [y_matblanc_bas, y_matblanc_haut, y_matblanc_haut, y_matblanc_bas,y_matblanc_bas])
-plt.plot([x_bas, x_bas,x_haut, x_haut, x_bas], [y_matnoir_bas, y_matnoir_haut, y_matnoir_haut, y_matnoir_bas, y_matnoir_bas])
-plt.show()
+#moyenne_matblanc=np.mean(im_red[y_matblanc_bas: y_matblanc_haut, x_bas:x_haut])
+#moyenne_matnoir=np.mean(im_red[y_matnoir_bas: y_matnoir_haut, x_bas:x_haut])              
+#
+#plt.figure()
+#plt.imshow(im_red, cmap='gray')
+#plt.plot([0,p], [m, m])
+#plt.plot([x_bas, x_bas,x_haut, x_haut, x_bas], [y_matblanc_bas, y_matblanc_haut, y_matblanc_haut, y_matblanc_bas,y_matblanc_bas])
+#plt.plot([x_bas, x_bas,x_haut, x_haut, x_bas], [y_matnoir_bas, y_matnoir_haut, y_matnoir_haut, y_matnoir_bas, y_matnoir_bas])
+#plt.show()
 
 
 

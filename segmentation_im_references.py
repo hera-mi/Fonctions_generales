@@ -6,6 +6,10 @@ Created on Wed Feb 13 22:54:45 2019
 
 #à faire: 
 
+
+peut etre essayer sur la grande zone et mettre des masques pour cacher les trucs
+
+
 faire correaltion des mask avec toutes la zone des fibres
 voir redimensionnant mutual inofrmation image based registration (intensity based). (voir pour transofrmer les mask et aps les images)
 voir filtre binaire
@@ -60,19 +64,25 @@ IMDIR_fuji=r"D:\Documents\Projet Mammographie\datasim-prj-phantoms-fujifilm-data
 IMDIR_planmed=r"D:\Documents\Projet Mammographie\datasim-prj-phantoms-planmed-dataset-201812061411\datasim-prj-phantoms-dataset-201812061411\digital\2.16.840.1.113669.632.20.20140513.192554394.19.415"
 IMDIR_hologic=r"D:\Documents\Projet Mammographie\datasim-prj-phantoms-hologic-20190125-mg-proc"
 IMDIR_ge=r"D:\Documents\Projet Mammographie\datasim-prj-phantoms-ge-20190125-mg-proc"
+IMDIR_mask=r"C:\Users\Gauthier Frecon\Documents\GitHub\Fonctions_generales\MASK"
 
 nom_imref_ge="ge-0001-0000-00000000.dcm"
 nom_imref_hologic="hologic-MG02.dcm"
-nom_imref_planmed="2.16.840.1.113669.632.20.20140513.202406491.200064.424.dcm"
-nom_imref_fuji="1.2.392.200036.9125.4.0.3826927078.1023464352.885066624.dcm"
+nom_imref_planmed="PM-2.16.840.1.113669.632.20.20130917.192819263.200064.384.dcm"
+nom_imref_fuji="1.2.392.200036.9125.4.0.3826927078.1023464352.885066624.dcm" #dans mask:  file:///D:/Documents/Projet Mammographie/datasim-prj-phantoms-fuji-20190208-mg/datasim-prj-phantoms-fuji-20190208-mg/1.2.392.200036.9125.3.10452022710478.64806964621.36488/1.2.392.200036.9125.4.0.2702151069.50333032.466243176.dcm
 
 
 
 #planmed
-chemin_planmed=IMDIR_planmed + "/" + nom_imref_planmed
+chemin_planmed=IMDIR_mask+ "/" + nom_imref_planmed
 ds = pydicom.dcmread(chemin_planmed)
 imref_planmed=ds.pixel_array
-F1_planmed=pipeline_segm_fibre(imref_planmed)
+mask_planmed=plt.imread(IMDIR_mask + "/" + "PM_mask.png")[:,:,3]
+[F1_planmed, F1_planmed_mask]=pipeline_segm_fibre(imref_planmed, mask_planmed)
+N_mask=len(np.where(F1_planmed_mask==1)[1])
+N_segm=len(np.where(F1_planmed==1)[1])
+
+#np.where(F1_planmed_mask=1)
 
 #ge
 chemin_ge=IMDIR_ge + "/" + nom_imref_ge

@@ -5,6 +5,9 @@ Created on Sat Mar  9 18:37:08 2019
 @author: Gauthier Frecon
 
 on ne voit pas les zones de repere à tester
+
+
+tester d'abotd avec n=billes et carres
 """
 
 import ICP
@@ -29,9 +32,9 @@ icp = ICP.ICP(
            calculation_image_size = 200,
            max_num_of_pixels_used_for_icp = 300,
            pixel_correspondence_dist_threshold = 50,
-           iterations = 16,
-           model_image =  nom_imref_planmed,
-           data_image = nom_imref_planmed,
+           iterations = 10,
+           model_image = "test1.png", #nom_imref_ge
+           data_image = "test2.png", #nom_imref_planmed, 
            font_file = r"C:\Users\Gauthier Frecon\Downloads\freeserif\FreeSerif/FreeSerif.ttf") #'/Library/Fonts/Arial.ttf',)#
 
 
@@ -60,3 +63,25 @@ icp.display_images_used_for_edge_based_icp()
 #icp.display_images_used_for_corner_based_icp()
 icp.display_results_as_movie()
 icp.cleanup_directory()
+
+
+model=plt.imread("test1.png")
+data=plt.imread("test2.png")
+
+num_rows, num_cols = im.shape
+translation_matrix = np.float32([ [1,0,-3], [0,1,203] ])
+img_translation = cv2.warpAffine(data, translation_matrix, (num_cols, num_rows))
+
+
+plt.figure(1)
+plt.imshow(model)
+plt.show()
+plt.figure(2)
+plt.imshow(data)
+plt.show()
+
+plt.figure(3)
+plt.imshow(img_translation)
+plt.show()
+
+# met au meme e,droit quand on fait T[1]/200*n donne bon nb de pixels a decaler
