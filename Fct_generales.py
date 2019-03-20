@@ -49,13 +49,13 @@ def rotation(im): #prend une image en argument, et la ressort pivotée dans le b
         else:
             return(im)
     
-def isoler(im,X,Y) : #Renvoie la zone de l'image correspondant aux pixels entre les valeurs spécifiées par X et Y
+def isoler(im,mask,X,Y) : #Renvoie la zone de l'image correspondant aux pixels entre les valeurs spécifiées par X et Y
     [px1,px2]=X    #(en proportions), utile pour tester les filtres seulement sur les zones d'interret
     [py1,py2]=Y
     [n,p]=np.shape(im)
     [x1,x2]=[int(n*px1),int(n*px2)]
     [y1,y2]=[int(p*py1),int(p*py2)]
-    return(im[x1:x2,y1:y2])
+    return(im[x1:x2,y1:y2],mask[x1:x2,y1:y2])
     
 def linear (source, a, b): #entrée: image 2D, sortie: image ou les pixels d'intensité x prennent la valeur ax+b
     taille=np.shape(source)
@@ -169,10 +169,10 @@ def redim_im(im, im_mask):
     taille=np.shape(im_red) 
     return (im_red, im_mask)
 
-def redim_im_bis(im):
+def redim_im_bis(im,mask):
     
     ims=skimage.filters.sobel(im)
-    plt.imshow(im)
+    #plt.imshow(im)
     [n,p]=np.shape(ims)
 
     #détection de la posistion du sein selon x (vertical)
@@ -185,6 +185,7 @@ def redim_im_bis(im):
         xb-=1
 
     im=im[xh:xb,:]
+    mask=mask[xh:xb,:]
     ims=ims[xh:xb,:]
     #détection de la position du sein selon y (horrizontal)
     yg=0
@@ -193,7 +194,7 @@ def redim_im_bis(im):
     yd=p-1
     while ims[(xb-xh)//2,yd-1]<1e-4 :
         yd-=1
-    return (im[:,yg:yd])
+    return (im[:,yg:yd],mask[:,yg:yd])
 
 
 def pipeline_segm_fibre(im,  im_mask, zone_fibre_n=[0.12,0.22], zone_fibre_p=[0.70,0.85], seuil1=28, seuil2=30):
