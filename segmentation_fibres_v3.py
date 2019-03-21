@@ -24,9 +24,9 @@ from skimage.restoration import denoise_bilateral
 from Fct_generales import *
 
 #ouverture de l'image
-IMDIR=r"/Users/reda/Downloads/EI2/PROJET/datasim-prj-phantoms-dataset-201812061411/digital/2.16.840.1.113669.632.20.20130917.192726317.17.381"
+IMDIR=r"D:\Documents\Projet Mammographie\datasim-prj-phantoms-planmed-dataset-201812061411\datasim-prj-phantoms-dataset-201812061411\digital\2.16.840.1.113669.632.20.20130917.192726317.17.381"
 nom_im1="2.16.840.1.113669.632.20.20130917.192819263.200064.384.dcm"
-IMDIR2=r"/Users/reda/Downloads/EI2/PROJET/datasim-prj-phantoms-dataset-201812061411/digital/2.16.840.1.113669.632.20.20120425.94758942.2456.10"
+IMDIR2=r"D:\Documents\Projet Mammographie\datasim-prj-phantoms-planmed-dataset-201812061411\datasim-prj-phantoms-dataset-201812061411\digital\2.16.840.1.113669.632.20.20120425.94758942.2456.10"
 nom_im2="2.16.840.1.113669.632.20.20120425.94850094.200083.40.dcm"
 
 IMDIR_fuji=r"D:\Documents\Projet Mammographie\datasim-prj-phantoms-fujifilm-dataset-201812130858\datasim-prj-phantoms-fuji-dataset-201812130858\1.2.392.200036.9125.3.1602111935212811.64878483013.3092121"
