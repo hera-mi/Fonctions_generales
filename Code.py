@@ -83,7 +83,7 @@ cv_image = img_as_ubyte(masses)
 #np.uint8(masses)
 thresh=cv2.adaptiveThreshold(cv_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 101, 1)
 #https://pythonprogramming.net/thresholding-image-analysis-python-opencv-tutorial/
-"""
+
 def trouver_masses(im):
     cv_im = img_as_ubyte(im)
     #plt.imshow(cv_im)
@@ -101,7 +101,7 @@ def trouver_masses(im):
     return(imb,contours)
 #https://stackoverrun.com/fr/q/11610670    
     
-""" 
+ 
 dirbis="D:/Documents/Travail/DATASIm/Projet/"
 imbis=io.imread(dirbis+"2.16.840.1.113669.632.20.20120425.94850094.200083.40.dcm.jpg")
 massesbis=isoler(rotation(imbis),[0.3,0.45],[0.01,0.36]) 
@@ -120,7 +120,7 @@ ax.plot(initb[:, 0], initb[:, 1], '--r', lw=3)
 ax.plot(snake[:, 0], snake[:, 1], '-b', lw=3)
 ax.set_xticks([]), ax.set_yticks([])
 ax.axis([0, i.shape[1], i.shape[0], 0])
-"""
+
 #plt.plot(c[501][:,0,0],c[501][:,0,1])
 #skimage.measure.find_contours(massesbis,100,fully_connected='low', positive_orientation='high')
 #
@@ -155,11 +155,11 @@ def trouver_zone(im,pas,valeur,sig=1): #peut être faut-il differencier le pas d
       
 #trouver_zone(massesbis,10,90)      
             
-""" Pour améliorer le résultat de "trouver_zone", essayer d'appliqer le filtrage adaptatif proposé
+ Pour améliorer le résultat de "trouver_zone", essayer d'appliqer le filtrage adaptatif proposé
 dans le pdf.
 Peut être qu'un filtre médian marcherait bien, puisqu'on a l'impression que le bruit est poivre et sel.
 Peut être qu'extraire le fond pourrait être efficace aussi.
-Il faudra étudier une chaîne de traitements qui donnent de bons résultats une fois la fonction codée."""
+Il faudra étudier une chaîne de traitements qui donnent de bons résultats une fois la fonction codée.
 
 def contrast_local(imtot,pos,N,F=lambda x:sqrt(x)):
     #Cette fonction calcule le niveau de gris d'un pixel situé en position pos de imtot en lui appliquant 
@@ -249,7 +249,7 @@ def rehausse(im,N):
                     
     
 #Tenter non local means
-"""   
+   
 patch_kw = dict(patch_size=5,      # 5x5 patches
                 patch_distance=6,  # 13x13 search area
                 multichannel=True)
@@ -460,7 +460,7 @@ def gamma_cor(im):
 
 #Essayer de retirer certains filtres afin d'avoir moins de paramètres à regler, et d'être donc moins dépendant de l'image
     
-DIR="D:/Documents/Travail/DATASIm/Projet/Fonctions_generales/Masses test/"
+DIR="D:/Documents/Travail/DATASIm/Projet/Fonctions_generales/Phantoms/"
 DIRMASK="D:/Documents/Travail/DATASIm/Projet/Fonctions_generales/MASK/"
 DIRBIS='./Masses test/'
 def detection(DIR):
@@ -489,6 +489,7 @@ m1=io.imread(DIRMASK+"PM_mask.png")
 #masses1=isoler(im1,[0.37,0.46],[0.05,0.29])    
 [masses1,mask1]=redim_im_bis(im1.pixel_array,m1)
 [masses1,mask1]=isoler(masses1,mask1,[0.603,0.722],[0.436,0.9])
+mask1=mask1[:,:,3]
 masses1=normalisation(masses1)
 
 im2=pydicom.dcmread(DIR+"hologic-MG02.dcm")
@@ -497,6 +498,7 @@ m2=io.imread(DIRMASK+"Hologic_mask.png")
 #masses2=isoler(im2,[0.355,0.445],[0.05,0.29])
 [masses2,mask2]=redim_im_bis(im2.pixel_array,m2)
 [masses2,mask2]=isoler(masses2,mask2,[0.603,0.722],[0.436,0.9])
+mask2=mask2[:,:,3]
 masses2=normalisation(masses2)
 
 im3=pydicom.dcmread(DIR+"ge-0001-0000-00000000.dcm")
@@ -505,6 +507,7 @@ m3=io.imread(DIRMASK+"GE_mask.png")
 #masses3=isoler(im3,[0.32,0.4021],[0.05,0.29])
 [masses3,mask3]=redim_im_bis(im3.pixel_array,m3)
 [masses3,mask3]=isoler(masses3,mask3,[0.603,0.722],[0.436,0.9])
+mask3=mask3[:,:,3]
 masses3=normalisation(masses3)
 
 im4=pydicom.dcmread(DIR+"1.2.392.200036.9125.4.0.2718896371.50333032.466243176.dcm")
@@ -513,6 +516,7 @@ m4=io.imread(DIRMASK+"FUJI_mask.png")
 #masses4=isoler(im4,[0.35,0.44],[0.05,0.29])
 [masses4,mask4]=redim_im_bis(im4.pixel_array,m4)
 [masses4,mask4]=isoler(masses4,mask4,[0.603,0.722],[0.436,0.9])
+mask4=mask4[:,:,3]
 masses4=normalisation(masses4)
 
 
@@ -520,21 +524,25 @@ masses4=normalisation(masses4)
 fond1=ndimage.convolve(masses1,meanKernel(101))
 np.save("fond1.npy",fond1)
 fond2=ndimage.convolve(masses2,meanKernel(101))
-np.save("fond1.npy",fond2)
+np.save("fond2.npy",fond2)
 fond3=ndimage.convolve(masses3,meanKernel(101))
-np.save("fond1.npy",fond3)
+np.save("fond3.npy",fond3)
 fond4=ndimage.convolve(masses4,meanKernel(101))
-np.save("fond1.npy",fond4)
+np.save("fond4.npy",fond4)
 
 #np.load("random-matrix.npy")
 
 
-"""
+
 Fond1=normalisation(skimage.color.rgb2gray(io.imread("./Fond_1.png")))
 Fond2=normalisation(skimage.color.rgb2gray(io.imread("./Fond_2.png")))
 Fond3=normalisation(skimage.color.rgb2gray(io.imread("./Fond_3.png")))
 Fond4=normalisation(skimage.color.rgb2gray(io.imread("./Fond_4.png")))
-
+"""
+Fond1=np.load("fond1.npy")
+Fond2=np.load("fond2.npy")
+Fond3=np.load("fond3.npy")
+Fond4=np.load("fond4.npy")
 #utiliser numpy save, ou sauvegarder en noir et blanc
 
 def test1():
@@ -669,13 +677,13 @@ plt.imshow(C5)
 def pipeline_corr(im,block_size = 8,sig=8,disk_size=5):
     #im=ndimage.convolve(masses,gradlap()[2])
     im_contloc=skimage.exposure.equalize_adapthist(im)
-    im=ndimage.convolve(im_contloc,gaussianKernel(block_size,sig))
+    #im=ndimage.convolve(im_contloc,gaussianKernel(block_size,sig))
     #im2=ndimage.convolve(im,gaussianKernel(2*block_size,2*sig))
     #im3=ndimage.convolve(im2,gaussianKernel(4*block_size,4*sig))
     
     #im=skimage.filters.gaussian(im)
     #im_contloc=skimage.exposure.equalize_adapthist(im)
-    im_med=scipy.signal.medfilt(im,7)
+    #im_med=scipy.signal.medfilt(im,7)
     #im_contloc=skimage.exposure.equalize_adapthist(im_med)
     im_eq=skimage.exposure.equalize_hist(im_contloc)
     im=skimage.filters.sobel(im_eq)-im_eq  #Ca marche pas mal en ajoutant ca
@@ -685,7 +693,7 @@ def pipeline_corr(im,block_size = 8,sig=8,disk_size=5):
     im_med=scipy.signal.medfilt(im_nl,7)
     im=skimage.filters.gaussian(im_med)
     im=scipy.signal.medfilt(im,7)
-    im_corr=scipy.signal.correlate(skimage.morphology.selem.disk(disk_size),im)
+    im_corr=scipy.signal.correlate(im,skimage.morphology.selem.disk(disk_size))#,mode='same')
     #skimage.filters.try_all_threshold(im_corr)
     t=skimage.filters.threshold_minimum(im_corr)
     imt=(im_corr>t).astype(int)
@@ -695,7 +703,9 @@ def pipeline_corr(im,block_size = 8,sig=8,disk_size=5):
 #Pour masses 2 : disk_size=10
 #Pour masses 3 : disk_size=3
 #Pour masses 4 : disk_size=14
-
+patch_kw = dict(patch_size=5,      # 5x5 patches
+                patch_distance=6,  # 13x13 search area
+                multichannel=True)
     
 def test_corr(dep,fin,pas):
     #Donner les tailles de début et de fin de la taille du disque avec lequel on correlle,
@@ -703,13 +713,13 @@ def test_corr(dep,fin,pas):
     assert((fin-dep)/pas is int, "impossible")
     for i in range((fin-dep)//pas):
         plt.subplot(4,(fin-dep)//pas,(i+1))
-        plt.imshow(pipeline_corr(masses1,disk_size=dep+i*pas))
+        plt.imshow(pipeline_corr(masses1-Fond1,disk_size=dep+i*pas))
         plt.subplot(4,(fin-dep)//pas,(fin-dep)//pas+(i+1))
-        plt.imshow(pipeline_corr(masses2,disk_size=dep+i*pas))
+        plt.imshow(pipeline_corr(masses2-Fond2,disk_size=dep+i*pas))
         plt.subplot(4,(fin-dep)//pas,2*(fin-dep)//pas+(i+1))
-        plt.imshow(pipeline_corr(masses3,disk_size=dep+i*pas))
+        plt.imshow(pipeline_corr(masses3-Fond3,disk_size=dep+i*pas))
         plt.subplot(4,(fin-dep)//pas,3*(fin-dep)//pas+(i+1))
-        plt.imshow(pipeline_corr(masses4,disk_size=dep+i*pas))
+        plt.imshow(pipeline_corr(masses4-Fond4,disk_size=dep+i*pas))
     plt.show()
 
 def pipeline_corr_light(im,block_size = 8,sig=8,disk_size=5):
@@ -766,7 +776,7 @@ def pipeline_finale(taille_masse=0.75):
     plt.imshow(l3)
     plt.subplot(4,1,4)
     plt.imshow(l4)
-    return(n1,n2,n3,n4)
+    return([l1,n1],[l2,n2],[l3,n3],[l4,n4])
     
 #Il faut faire 1-res2/3
     
