@@ -38,8 +38,11 @@ validation de localisation et de segmentation (mm nb de pixels) (scoring : on a 
 -est ce que je selectionne la composante connexe la plus grosse (pb résidu avec yen) non
 
 
-
-
+-tests de segmentation dice
+-canal vert = segm
+-canal rouge= mask
+-jouer sur longueru LxLy dans corrélation
+-spacing seb
 """
 
 import skimage 
@@ -71,14 +74,6 @@ nom_imref_fuji="1.2.392.200036.9125.4.0.2718896371.50333032.466243176.dcm"
 
 
 
-#planmed
-print('\n', 'planmed:')
-chemin_planmed=IMDIR_phantom + "/" + nom_imref_planmed
-ds = pydicom.dcmread(chemin_planmed)
-imref_planmed=ds.pixel_array
-mask_planmed=plt.imread(IMDIR_mask + "/" + "PM_mask.png")[:,:,3]
-[F1_planmed, F1_planmed_mask, mesures_ge]=pipeline_segm_fibre(imref_planmed, mask_planmed)
-
 
 
 #ge
@@ -108,6 +103,14 @@ ds = pydicom.dcmread(chemin)
 imref_fuji=ds.pixel_array
 mask_fuji=plt.imread(IMDIR_mask + "/" + "FUJI_mask.png")[:,:,3]
 [F1_fuji, F1_fuji_mask, mesures_fuji]=pipeline_segm_fibre(imref_fuji ,mask_fuji, zone_fibre_n=[0.07,0.15], zone_fibre_p=[0.66,0.81]) #, seuil2=80) #mettre un angle de 150 pour faire un truc propre (angle de 60 deg au lieu de 45 deg)
+
+#planmed
+print('\n', 'planmed:')
+chemin_planmed=IMDIR_phantom + "/" + nom_imref_planmed
+ds = pydicom.dcmread(chemin_planmed)
+imref_planmed=ds.pixel_array
+mask_planmed=plt.imread(IMDIR_mask + "/" + "PM_mask.png")[:,:,3]
+[F1_planmed, F1_planmed_mask, mesures_ge]=pipeline_segm_fibre(imref_planmed, mask_planmed)
 
 
 

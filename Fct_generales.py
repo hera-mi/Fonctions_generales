@@ -3,6 +3,9 @@
 Created on Sat Jan 19 11:12:27 2019
 
 @author: villa
+
+
+rajouter dice
 """
 
 import numpy as np
@@ -135,13 +138,13 @@ def correlation_mask_I(im, Lx, Ly, seuil, angle=45):
 
     #skimage.filters.try_all_threshold(corr_mask)
     seuil=skimage.filters.threshold_yen(corr_mask)
-#    plt.figure(3)
-#    plt.imshow(corr_mask, cmap='gray')
-#    plt.show()
+    plt.figure(3)
+    plt.imshow(corr_mask, cmap='gray')
+    plt.show()
     im_corr=corr_mask>seuil
-#    plt.figure(2)
-#    plt.imshow(im_corr, cmap='gray')
-#    plt.show()
+    plt.figure(2)
+    plt.imshow(im_corr, cmap='gray')
+    plt.show()
     
     return(im_corr)
     
@@ -215,6 +218,7 @@ def resultat(im_segmentation, im_mask):
     FN=len(np.where(im_segmentation-im_mask==-1)[1])
 
     # Accuracy
+    measures['dice'] = 2*TP/(2*TP+FN+FP)
     measures['accuracy'] = (TP+TN)/(TP+TN+FP+FN+eps)    
     # Precision
     measures['precision'] = TP/(TP+FP+eps)        
@@ -231,6 +235,8 @@ def resultat(im_segmentation, im_mask):
 
 
     print('\n',
+          'Dice', measures['dice'], '\n',
+          '\n',
           'nbpixels mask', measures['N_mask'], '\n',
           'nbpixels segmentation', measures['N_segm'], '\n',
           'Accuracy ', measures['accuracy'], '\n',
