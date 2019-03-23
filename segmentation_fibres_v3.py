@@ -4,7 +4,7 @@ Created on Thu Jan 31 21:44:15 2019
 
 @author: Gauthier Frecon
 
-tests de segmentation
+
 
 """
 
@@ -20,7 +20,7 @@ import math
 from scipy import signal
 import skimage.io as io
 from skimage.transform import rotate
-from skimage.restoration import denoise_tv_chambolle, denoise_bilateral
+from skimage.restoration import denoise_bilateral
 from Fct_generales import *
 
 #ouverture de l'image
@@ -54,12 +54,12 @@ plt.close('all')
 if np.mean(im[n//2-10:n//2+10 , 0:20]) > np.mean(im[n//2-10:n//2+10 , p-21:p-1]) :
      im=-im+np.max(im)
   
-im_red=redim_im(im)
+[im_red, m]=redim_im(im, np.zeros_like(im))
 [n,p]=np.shape(im_red)
 
 #isolement fibre f1
  
-fibre_F1=isoler(im_red, [0.11,0.22], [0.70,0.86])
+[fibre_F1, m]=isoler(im_red, np.zeros_like(im_red), [0.11,0.22], [0.70,0.86])
          
 #np.array([s])
 
@@ -69,8 +69,8 @@ fibre_F1=equalize_adapthist(fibre_F1)
 plt.figure()
 plt.imshow(fibre_F1, cmap='gray')
 plt.show()
-
-sigma=np.mean(isoler(fibre_F1,[0,0.1], [0,0.1]))
+zone_sigma,m=isoler(fibre_F1, np.zeros_like(fibre_F1),[0,0.1], [0,0.1])
+sigma=np.mean(zone_sigma)
 denoised = denoise_bilateral(fibre_F1,sigma_color=sigma, sigma_spatial=4, multichannel=False)
 plt.figure()
 plt.imshow(denoised, cmap='gray')
@@ -103,7 +103,7 @@ plt.show()
 
 #fibre F5
 
-fibre_F5=isoler(im, [0.24,0.31], [0.80,0.90])
+fibre_F5,m =isoler(im, np.zeros_like(im), [0.24,0.31], [0.80,0.90])
 
 
 fibre_F5=equalize_adapthist(fibre_F5) 
@@ -112,8 +112,8 @@ plt.imshow(fibre_F5, cmap='gray')
 plt.show()
 
 #plt.imshow(ds.pixel_array, cmap=plt.cm.bone) 
-
-sigma=np.mean(isoler(fibre_F5,[0,0.1], [0,0.1]))
+zone_sigma,m=isoler(fibre_F5, np.zeros_like(fibre_F5),[0,0.1], [0,0.1])
+sigma=np.mean(zone_sigma)
 denoised = denoise_bilateral(fibre_F5,win_size=5, sigma_color=sigma, sigma_spatial=4, multichannel=False)
 plt.figure()
 plt.imshow(denoised, cmap='gray')
@@ -141,10 +141,10 @@ plt.show()
 
 
 # traitement toute fibre  (marche pas parce que tous les bords du phantom perturbe l'algp)
-
+'''
 plt.close('all')
 
-zone_fibres=isoler(im_red,[0.12,0.42], [0.29,0.85]) 
+zone_fibres,m=isoler(im_red, np.zeros_like(im_red),[0.12,0.42], [0.29,0.85]) 
 [n,p]=np.shape(zone_fibres)
 for i in range(n):
     for j in range(p):
@@ -155,13 +155,14 @@ for i in range(n):
 #plt.figure()
 #plt.imshow(zone_fibres, cmap='gray')
 #plt.show()
-plt.close('all')
+#plt.close('all')
 zone_fibres=equalize_adapthist(zone_fibres)
 plt.figure()
 plt.imshow(zone_fibres, cmap='gray')
 plt.show()
 
-sigma=np.mean(isoler(zone_fibres,[0.8,0.9], [0.4,0.5]))
+zone_sigma,m=isoler(zone_fibres, np.zeros_like(fibre_F5),[0.8,0.9], [0.4,0.5])
+sigma=np.mean(zone_sigma)
 denoised = denoise_bilateral(zone_fibres,win_size=3, sigma_color=0.2, sigma_spatial=4, multichannel=False)
 plt.figure()
 plt.imshow(denoised, cmap='gray')
@@ -178,6 +179,7 @@ plt.imshow(im_filtree, cmap='gray')
 plt.show()
 im_corr_I1=correlation_mask_I(im_filtree,3,40, seuil=5, angle=45) 
 im_corr_I2=correlation_mask_I(im_filtree,4,60, seuil=26, angle=135) 
+
 
 # zones carrés noir et blanc
 
@@ -200,6 +202,6 @@ y_matnoir_haut=m+125+30
 #plt.plot([x_bas, x_bas,x_haut, x_haut, x_bas], [y_matblanc_bas, y_matblanc_haut, y_matblanc_haut, y_matblanc_bas,y_matblanc_bas])
 #plt.plot([x_bas, x_bas,x_haut, x_haut, x_bas], [y_matnoir_bas, y_matnoir_haut, y_matnoir_haut, y_matnoir_bas, y_matnoir_bas])
 #plt.show()
-
+'''
 
 

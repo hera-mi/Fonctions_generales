@@ -38,8 +38,11 @@ validation de localisation et de segmentation (mm nb de pixels) (scoring : on a 
 -est ce que je selectionne la composante connexe la plus grosse (pb résidu avec yen) non
 
 
-
-
+-tests de segmentation dice
+-canal vert = segm
+-canal rouge= mask
+-jouer sur longueru LxLy dans corrélation
+-spacing seb
 """
 
 import skimage 
@@ -60,66 +63,70 @@ from Fct_generales import *
 plt.close('all')
 
 
-IMDIR_fuji=r"D:\Documents\Projet Mammographie\datasim-prj-phantoms-fujifilm-dataset-201812130858\datasim-prj-phantoms-fuji-dataset-201812130858\1.2.392.200036.9125.3.1602111935212811.64878483013.3092121"
-IMDIR_planmed=r"D:\Documents\Projet Mammographie\datasim-prj-phantoms-planmed-dataset-201812061411\datasim-prj-phantoms-dataset-201812061411\digital\2.16.840.1.113669.632.20.20140513.192554394.19.415"
-IMDIR_hologic=r"D:\Documents\Projet Mammographie\datasim-prj-phantoms-hologic-20190125-mg-proc"
-IMDIR_ge=r"D:\Documents\Projet Mammographie\datasim-prj-phantoms-ge-20190125-mg-proc"
+
 IMDIR_mask=r"C:\Users\Gauthier Frecon\Documents\GitHub\Fonctions_generales\MASK"
+IMDIR_phantom=r"C:\Users\Gauthier Frecon\Documents\GitHub\Fonctions_generales\Phantoms"
 
 nom_imref_ge="ge-0001-0000-00000000.dcm"
 nom_imref_hologic="hologic-MG02.dcm"
-nom_imref_planmed="PM-2.16.840.1.113669.632.20.20130917.192819263.200064.384.dcm"
-nom_imref_fuji="1.2.392.200036.9125.4.0.3826927078.1023464352.885066624.dcm" #dans mask:  file:///D:/Documents/Projet Mammographie/datasim-prj-phantoms-fuji-20190208-mg/datasim-prj-phantoms-fuji-20190208-mg/1.2.392.200036.9125.3.10452022710478.64806964621.36488/1.2.392.200036.9125.4.0.2702151069.50333032.466243176.dcm
+nom_imref_planmed="2.16.840.1.113669.632.20.20130917.192819263.200064.384.dcm"
+nom_imref_fuji="1.2.392.200036.9125.4.0.2718896371.50333032.466243176.dcm"
 
 
 
-#planmed
-chemin_planmed=IMDIR_mask+ "/" + nom_imref_planmed
-ds = pydicom.dcmread(chemin_planmed)
-imref_planmed=ds.pixel_array
-mask_planmed=plt.imread(IMDIR_mask + "/" + "PM_mask.png")[:,:,3]
-[F1_planmed, F1_planmed_mask]=pipeline_segm_fibre(imref_planmed, mask_planmed)
-N_mask=len(np.where(F1_planmed_mask==1)[1])
-N_segm=len(np.where(F1_planmed==1)[1])
 
-#np.where(F1_planmed_mask=1)
 
 #ge
-chemin_ge=IMDIR_ge + "/" + nom_imref_ge
+print('\n', 'ge:')
+chemin_ge=IMDIR_phantom + "/" + nom_imref_ge
 ds = pydicom.dcmread(chemin_ge)
 imref_ge=ds.pixel_array
-F1_ge=pipeline_segm_fibre(imref_ge,zone_fibre_n=[0.10,0.21], zone_fibre_p=[0.66,0.83])
+mask_ge=plt.imread(IMDIR_mask + "/" + "GE_mask.png")[:,:,3]
+[F1_ge, F1_ge_mask, mesures_ge]=pipeline_segm_fibre(imref_ge, mask_ge, zone_fibre_n=[0.10,0.21], zone_fibre_p=[0.66,0.83])
 #F5_ge=pipeline_segm_fibre(imref_ge,zone_fibre_n=[0.21,0.31], zone_fibre_p=[0.66,0.80])
 
 
 
 # hologic
-chemin=IMDIR_hologic + "/" + nom_imref_hologic
+
+chemin=IMDIR_phantom + "/" + nom_imref_hologic
 ds = pydicom.dcmread(chemin)
 imref_hologic=ds.pixel_array
-F1_hologic=pipeline_segm_fibre(imref_hologic,zone_fibre_n=[0.09,0.20], zone_fibre_p=[0.68,0.84]) 
+mask_hologic=plt.imread(IMDIR_mask + "/" + "Hologic_mask.png")[:,:,3]
+print('\n', 'hologic:')
+[F1_hologic, F1_hologic_mask, mesures_hologic]=pipeline_segm_fibre(imref_hologic, mask_hologic,zone_fibre_n=[0.09,0.20], zone_fibre_p=[0.68,0.84]) 
 
 #fuji
-chemin=IMDIR_fuji + "/" + nom_imref_fuji
+print('\n', 'fuji:')
+chemin=IMDIR_phantom + "/" + nom_imref_fuji
 ds = pydicom.dcmread(chemin)
 imref_fuji=ds.pixel_array
-F1_fuji=pipeline_segm_fibre(imref_fuji ,zone_fibre_n=[0.07,0.15], zone_fibre_p=[0.66,0.81]) #, seuil2=80) #mettre un angle de 150 pour faire un truc propre (angle de 60 deg au lieu de 45 deg)
+mask_fuji=plt.imread(IMDIR_mask + "/" + "FUJI_mask.png")[:,:,3]
+[F1_fuji, F1_fuji_mask, mesures_fuji]=pipeline_segm_fibre(imref_fuji ,mask_fuji, zone_fibre_n=[0.07,0.15], zone_fibre_p=[0.66,0.81]) #, seuil2=80) #mettre un angle de 150 pour faire un truc propre (angle de 60 deg au lieu de 45 deg)
+
+#planmed
+print('\n', 'planmed:')
+chemin_planmed=IMDIR_phantom + "/" + nom_imref_planmed
+ds = pydicom.dcmread(chemin_planmed)
+imref_planmed=ds.pixel_array
+mask_planmed=plt.imread(IMDIR_mask + "/" + "PM_mask.png")[:,:,3]
+[F1_planmed, F1_planmed_mask, mesures_ge]=pipeline_segm_fibre(imref_planmed, mask_planmed)
 
 
 
 
+##
+#plt.close('all')
+#plt.figure(1)
 #
-plt.close('all')
-plt.figure(1)
-
-ims=skimage.filters.sobel(imref_hologic)
-plt.imshow(ims)
-plt.show()
-
-plt.figure(2)
-plt.imshow(redim_im(-imref_planmed+np.max(imref_planmed)), cmap='gray')
-plt.show()
-
+#ims=skimage.filters.sobel(imref_hologic)
+#plt.imshow(ims)
+#plt.show()
+#
+#plt.figure(2)
+#plt.imshow(redim_im(-imref_planmed+np.max(imref_planmed)), cmap='gray')
+#plt.show()
+#
 
 
 
