@@ -500,6 +500,7 @@ m2=io.imread(DIRMASK+"Hologic_mask.png")
 [masses2,mask2]=isoler(masses2,mask2,[0.603,0.722],[0.436,0.9])
 mask2=mask2[:,:,3]
 masses2=normalisation(masses2)
+masses2=1-masses2
 
 im3=pydicom.dcmread(DIR+"ge-0001-0000-00000000.dcm")
 m3=io.imread(DIRMASK+"GE_mask.png")
@@ -509,6 +510,7 @@ m3=io.imread(DIRMASK+"GE_mask.png")
 [masses3,mask3]=isoler(masses3,mask3,[0.603,0.722],[0.436,0.9])
 mask3=mask3[:,:,3]
 masses3=normalisation(masses3)
+masses3=1-masses3
 
 im4=pydicom.dcmread(DIR+"1.2.392.200036.9125.4.0.2718896371.50333032.466243176.dcm")
 m4=io.imread(DIRMASK+"FUJI_mask.png")
@@ -541,7 +543,9 @@ Fond4=normalisation(skimage.color.rgb2gray(io.imread("./Fond_4.png")))
 """
 Fond1=np.load("fond1.npy")
 Fond2=np.load("fond2.npy")
+Fond2=1-Fond2
 Fond3=np.load("fond3.npy")
+Fond3=1-Fond3
 Fond4=np.load("fond4.npy")
 #utiliser numpy save, ou sauvegarder en noir et blanc
 
@@ -673,10 +677,14 @@ plt.subplot(5,1,4)
 plt.imshow(C4)
 plt.subplot(5,1,5)
 plt.imshow(C5)
+
+Essayer d'inverser les images Hologic et GE pour voir si cela change quelque chose  ET LE FOND!!!
+essayer de floutter proportionnelement à la metrique
+Idem pour extraire le fond.
 """
 def pipeline_corr(im,block_size = 8,sig=8,disk_size=5):
     #im=ndimage.convolve(masses,gradlap()[2])
-    im_contloc=skimage.exposure.equalize_adapthist(im)
+    #im_contloc=skimage.exposure.equalize_adapthist(im)
     #im=ndimage.convolve(im_contloc,gaussianKernel(block_size,sig))
     #im2=ndimage.convolve(im,gaussianKernel(2*block_size,2*sig))
     #im3=ndimage.convolve(im2,gaussianKernel(4*block_size,4*sig))
@@ -685,7 +693,7 @@ def pipeline_corr(im,block_size = 8,sig=8,disk_size=5):
     #im_contloc=skimage.exposure.equalize_adapthist(im)
     #im_med=scipy.signal.medfilt(im,7)
     #im_contloc=skimage.exposure.equalize_adapthist(im_med)
-    im_eq=skimage.exposure.equalize_hist(im_contloc)
+    im_eq=skimage.exposure.equalize_hist(im)
     im=skimage.filters.sobel(im_eq)-im_eq  #Ca marche pas mal en ajoutant ca
     sigma_est = np.mean(estimate_sigma(im, multichannel=True))
     im_nl = denoise_nl_means(im, h=1.15 * sigma_est, fast_mode=False,
@@ -693,7 +701,7 @@ def pipeline_corr(im,block_size = 8,sig=8,disk_size=5):
     im_med=scipy.signal.medfilt(im_nl,7)
     im=skimage.filters.gaussian(im_med)
     im=scipy.signal.medfilt(im,7)
-    im_corr=scipy.signal.correlate(im,skimage.morphology.selem.disk(disk_size))#,mode='same')
+    im_corr=scipy.signal.correlate(im,skimage.morphology.selem.disk(disk_size),mode='same')
     #skimage.filters.try_all_threshold(im_corr)
     t=skimage.filters.threshold_minimum(im_corr)
     imt=(im_corr>t).astype(int)
@@ -715,9 +723,9 @@ def test_corr(dep,fin,pas):
         plt.subplot(4,(fin-dep)//pas,(i+1))
         plt.imshow(pipeline_corr(masses1-Fond1,disk_size=dep+i*pas))
         plt.subplot(4,(fin-dep)//pas,(fin-dep)//pas+(i+1))
-        plt.imshow(pipeline_corr(masses2-Fond2,disk_size=dep+i*pas))
+        plt.imshow(pipeline_corr(masses2-(1-Fond2),disk_size=dep+i*pas))
         plt.subplot(4,(fin-dep)//pas,2*(fin-dep)//pas+(i+1))
-        plt.imshow(pipeline_corr(masses3-Fond3,disk_size=dep+i*pas))
+        plt.imshow(pipeline_corr(masses3-(1-Fond3),disk_size=dep+i*pas))
         plt.subplot(4,(fin-dep)//pas,3*(fin-dep)//pas+(i+1))
         plt.imshow(pipeline_corr(masses4-Fond4,disk_size=dep+i*pas))
     plt.show()
@@ -754,19 +762,19 @@ def pipeline_finale(taille_masse=0.75):
     D2=round(0.75/im2.ImagerPixelSpacing[0])
     D3=round(0.75/im3.ImagerPixelSpacing[0])
     D4=round(0.75/im4.ImagerPixelSpacing[0])"""
-    D4=round(0.75/im4.ImagerPixelSpacing[0])
+    D4=round(taille_masse/im4.ImagerPixelSpacing[0])
     #On fixe le bon rayon à avoir pour im4, et ensuite on ajuste les autres proportionellement au carré
     #du rapport des pixels, parceque l'on considère des volumes
     D1=round(D4*(1/im1.ImagerPixelSpacing[0]*im4.ImagerPixelSpacing[0])**2)
     D2=round(D4*(1/im2.ImagerPixelSpacing[0]*im4.ImagerPixelSpacing[0])**2)
     D3=round(D4*(1/im3.ImagerPixelSpacing[0]*im4.ImagerPixelSpacing[0])**2)
-    res1=pipeline_corr(masses1,disk_size=D1)
-    res2=pipeline_corr(masses2,disk_size=D2)
-    res3=pipeline_corr(masses3,disk_size=D3)
-    res4=pipeline_corr(masses4,disk_size=D4)
+    res1=pipeline_corr(masses1-Fond1,disk_size=D1)
+    res2=pipeline_corr(masses2-Fond2,disk_size=D2)
+    res3=pipeline_corr(masses3-Fond3,disk_size=D3)
+    res4=pipeline_corr(masses4-Fond4,disk_size=D4)
     [l1,n1]=scipy.ndimage.measurements.label(res1)
-    [l2,n2]=scipy.ndimage.measurements.label(1-res2)
-    [l3,n3]=scipy.ndimage.measurements.label(1-res3)
+    [l2,n2]=scipy.ndimage.measurements.label(res2)
+    [l3,n3]=scipy.ndimage.measurements.label(res3)
     [l4,n4]=scipy.ndimage.measurements.label(res4)
     plt.subplot(4,1,1)
     plt.imshow(l1)
