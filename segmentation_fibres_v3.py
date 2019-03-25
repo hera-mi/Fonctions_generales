@@ -22,6 +22,8 @@ import skimage.io as io
 from skimage.transform import rotate
 from skimage.restoration import denoise_bilateral
 from Fct_generales import *
+import random
+
 
 #ouverture de l'image
 IMDIR=r"D:\Documents\Projet Mammographie\datasim-prj-phantoms-planmed-dataset-201812061411\datasim-prj-phantoms-dataset-201812061411\digital\2.16.840.1.113669.632.20.20130917.192726317.17.381"
@@ -56,7 +58,7 @@ if np.mean(im[n//2-10:n//2+10 , 0:20]) > np.mean(im[n//2-10:n//2+10 , p-21:p-1])
   
 [im_red, m]=redim_im(im, np.zeros_like(im))
 [n,p]=np.shape(im_red)
-
+'''
 #isolement fibre f1
  
 [fibre_F1, m]=isoler(im_red, np.zeros_like(im_red), [0.11,0.22], [0.70,0.86])
@@ -70,8 +72,8 @@ plt.figure()
 plt.imshow(fibre_F1, cmap='gray')
 plt.show()
 zone_sigma,m=isoler(fibre_F1, np.zeros_like(fibre_F1),[0,0.1], [0,0.1])
-sigma=np.mean(zone_sigma)
-denoised = denoise_bilateral(fibre_F1,sigma_color=sigma, sigma_spatial=4, multichannel=False)
+moy=np.mean(zone_sigma)
+denoised = denoise_bilateral(fibre_F1,sigma_color=moy, sigma_spatial=4, multichannel=False)
 plt.figure()
 plt.imshow(denoised, cmap='gray')
 plt.show()
@@ -113,8 +115,8 @@ plt.show()
 
 #plt.imshow(ds.pixel_array, cmap=plt.cm.bone) 
 zone_sigma,m=isoler(fibre_F5, np.zeros_like(fibre_F5),[0,0.1], [0,0.1])
-sigma=np.mean(zone_sigma)
-denoised = denoise_bilateral(fibre_F5,win_size=5, sigma_color=sigma, sigma_spatial=4, multichannel=False)
+moy_bruit=np.std(zone_sigma)
+denoised = denoise_bilateral(fibre_F5,win_size=5, sigma_color=moy_bruit, sigma_spatial=4, multichannel=False)
 plt.figure()
 plt.imshow(denoised, cmap='gray')
 plt.show()
@@ -138,18 +140,22 @@ plt.figure()
 plt.imshow(im_segmentation_F5, cmap='gray')
 plt.show()
 
-
+'''
 
 # traitement toute fibre  (marche pas parce que tous les bords du phantom perturbe l'algp)
-'''
 plt.close('all')
 
-zone_fibres,m=isoler(im_red, np.zeros_like(im_red),[0.12,0.42], [0.29,0.85]) 
+
+
+zone_fibres,m=isoler(im_red, np.zeros_like(im_red),[0.12,0.42], [0.30,0.85]) 
+[zone_bruit,m]=isoler(zone_fibres, np.zeros_like(zone_fibres),[0.25,0.75], [0.2,0.8])
+moy_bruit=np.mean(zone_bruit)
+zone_fibres_ravel=np.ravel(zone_bruit)
 [n,p]=np.shape(zone_fibres)
 for i in range(n):
     for j in range(p):
-        if (-i)>(-370 +(380/370)*j) or (-i)<((n-500)/(p-350)*j-900) :
-            zone_fibres[i,j]=0
+        if (-i)>(-370 +(340/370)*j) or (-i)<((n-500)/(p-350)*j-900) :
+            zone_fibres[i,j]=random.choice(zone_fibres_ravel)
 
 
 #plt.figure()
@@ -161,24 +167,31 @@ plt.figure()
 plt.imshow(zone_fibres, cmap='gray')
 plt.show()
 
-zone_sigma,m=isoler(zone_fibres, np.zeros_like(fibre_F5),[0.8,0.9], [0.4,0.5])
-sigma=np.mean(zone_sigma)
-denoised = denoise_bilateral(zone_fibres,win_size=3, sigma_color=0.2, sigma_spatial=4, multichannel=False)
+denoised = denoise_bilateral(zone_fibres,win_size=3, sigma_color=moy_bruit, sigma_spatial=4, multichannel=False)
 plt.figure()
 plt.imshow(denoised, cmap='gray')
 plt.show()
-fftc_highpass=highpass_filter(denoised,Dc=3)
+fftc_highpass=highpass_filter(denoised,Dc=10)
 fft_highpass=np.fft.ifftshift(fftc_highpass)
 invfft_highpass=np.real(np.fft.ifft2(fft_highpass))
 plt.figure()
 plt.imshow(invfft_highpass, cmap='gray') # zone au milieu des fibres
 plt.show()
-im_filtree=skimage.restoration.denoise_nl_means(denoised, patch_distance=2)#scipy.signal.medfilt(skimage.restoration.denoise_nl_means(  zone_fibres))#invfft_highpass)) 
+[zone_bruit,m]=isoler(invfft_highpass, np.zeros_like(invfft_highpass),[0.5,0.6], [0.5,0.6])
+moy_bruit=np.mean(zone_bruit)
+zone_bruit_ravel=np.ravel(zone_bruit)
+[n,p]=np.shape(zone_fibres)
+for i in range(n):
+    for j in range(p):
+        if (-i)>(-370 +(380/370)*j) or (-i)<((n-500)/(p-350)*j-900) :
+            invfft_highpass[i,j]=random.choice(zone_bruit_ravel)
+
+im_filtree=skimage.restoration.denoise_nl_means(invfft_highpass, patch_distance=2)#scipy.signal.medfilt(skimage.restoration.denoise_nl_means(  zone_fibres))#invfft_highpass)) 
 plt.figure()
 plt.imshow(im_filtree, cmap='gray')
 plt.show()
-im_corr_I1=correlation_mask_I(im_filtree,3,40, seuil=5, angle=45) 
-im_corr_I2=correlation_mask_I(im_filtree,4,60, seuil=26, angle=135) 
+im_corr_I1=correlation_mask_I(im_filtree,3,40, angle=45) 
+im_corr_I2=correlation_mask_I(im_filtree,4,60, angle=135) 
 
 
 # zones carrés noir et blanc
@@ -202,6 +215,5 @@ y_matnoir_haut=m+125+30
 #plt.plot([x_bas, x_bas,x_haut, x_haut, x_bas], [y_matblanc_bas, y_matblanc_haut, y_matblanc_haut, y_matblanc_bas,y_matblanc_bas])
 #plt.plot([x_bas, x_bas,x_haut, x_haut, x_bas], [y_matnoir_bas, y_matnoir_haut, y_matnoir_haut, y_matnoir_bas, y_matnoir_bas])
 #plt.show()
-'''
 
 

@@ -5,7 +5,6 @@ Created on Sat Jan 19 11:12:27 2019
 @author: villa
 
 
-rajouter dice
 """
 
 import numpy as np
@@ -116,7 +115,7 @@ def meanKernel(hs):
     kernel = 1/np.power((2*hs+1),2) * np.ones([2*hs+1,2*hs+1])
     return kernel
  
-def correlation_mask_I(im, Lx, Ly, seuil, angle=45):
+def correlation_mask_I(im, Lx, Ly, angle=45, option=True):
     ''' correlation de l'image avec un mask en I de taille 2*Lx   * 2*Ly puis seuillage à seuil'''
     
     mask=np.zeros_like(im) #prendre la shape et enlever les 122
@@ -135,14 +134,17 @@ def correlation_mask_I(im, Lx, Ly, seuil, angle=45):
 #    fig, ax = plt.subplots()
 #    plt.plot(x[:-1], y)
 #    plt.show()
-
-    #skimage.filters.try_all_threshold(corr_mask)
-    seuil=skimage.filters.threshold_yen(corr_mask)
-    plt.figure(3)
+    
+    skimage.filters.try_all_threshold(corr_mask)
+    if option:
+        seuil=skimage.filters.threshold_yen(corr_mask)
+    else:
+        seuil=skimage.filters.threshold_otsu(corr_mask)
+    plt.figure()
     plt.imshow(corr_mask, cmap='gray')
     plt.show()
     im_corr=corr_mask>seuil
-    plt.figure(2)
+    plt.figure()
     plt.imshow(im_corr, cmap='gray')
     plt.show()
     
@@ -250,7 +252,7 @@ def resultat(im_segmentation, im_mask):
     return(measures)
     
     
-def pipeline_segm_fibre(im,  im_mask, zone_fibre_n=[0.12,0.22], zone_fibre_p=[0.70,0.85], seuil1=28, seuil2=30):
+def pipeline_segm_fibre(im,  im_mask, zone_fibre_n=[0.12,0.22], zone_fibre_p=[0.70,0.85]):
     '''segmente la fibres issue de zone_fibre, entée =image d'un fichier dicom   
 pipeline :
 
@@ -263,11 +265,9 @@ pipeline :
 -corrélation des deux mask
 -OU logique
 
+    
 
-A faire ?:
-    -faire une correlation plus propre en prenant les moyennes et en gérant la variance
-    -Etiquettage des branches ?
-    -testter sobel
+
     '''
 
     #test inversion
@@ -288,9 +288,9 @@ A faire ?:
 
     fibre=equalize_adapthist(fibre)
     
-    zone_sigma=isoler(fibre, np.zeros_like(fibre),[0,0.1], [0,0.1])
-    sigma =np.mean(zone_sigma)
-    denoised = denoise_bilateral(fibre,win_size=3, sigma_color=sigma, sigma_spatial=4, multichannel=False)
+    zone_bruit=isoler(fibre, np.zeros_like(fibre),[0,0.1], [0,0.1])
+    moy_bruit =np.mean(zone_bruit)
+    denoised = denoise_bilateral(fibre,win_size=3, sigma_color=moy_bruit, sigma_spatial=4, multichannel=False)
  
     fftc_highpass=highpass_filter(denoised,Dc=3)
     fft_highpass=np.fft.ifftshift(fftc_highpass)
@@ -301,8 +301,8 @@ A faire ?:
     plt.show()
     
     #corrélation
-    im_corr_I1=correlation_mask_I(im_filtree,4,40, seuil=seuil1, angle=45) 
-    im_corr_I2=correlation_mask_I(im_filtree,5,40, seuil=seuil2, angle=135) #4,20, seuil=193, angle=135)
+    im_corr_I1=correlation_mask_I(im_filtree,4,40, angle=45) 
+    im_corr_I2=correlation_mask_I(im_filtree,5,40, angle=135) #4,20, seuil=193, angle=135)
     im_segmentation= (im_corr_I1+im_corr_I2)
     im_segmentation=im_segmentation.astype('float32')
     plt.figure()

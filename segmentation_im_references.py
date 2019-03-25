@@ -6,23 +6,13 @@ Created on Wed Feb 13 22:54:45 2019
 
 #à faire: 
 
-
-peut etre essayer sur la grande zone et mettre des masques pour cacher les trucs
-
-
-faire correaltion des mask avec toutes la zone des fibres
-voir redimensionnant mutual inofrmation image based registration (intensity based). (voir pour transofrmer les mask et aps les images)
-voir filtre binaire
-
-
-
--mise au propre fonction pour isoler les zones
-coupage au mamelon presque ok sauf pr planmed
-coupage sur les billes assez précis ?
-sur l'axe p plus compliqué
-proportion et zones des fibres différents entre les phantom différents?
--étude autres fibres (F1-F6)
-validation de localisation et de segmentation (mm nb de pixels) (scoring : on a trouvé 5 fibres)
+-faire pipeline pour toutes fibres
+-Etiquettage des branches
+-scoring : on a trouvé 5 fibres 
+-gérer le redimensionnement
+-canal vert = segm, canal rouge= mask
+-jouer sur longueur Lx,Ly dans corrélation
+-spacing seb
 
 
 
@@ -30,19 +20,12 @@ validation de localisation et de segmentation (mm nb de pixels) (scoring : on a 
 -valeurs moyenne de la glande et de la graisse peut-etre à exploiter
 -mettre au propre redim_im (la fonction marche dnc pas obligé)
 
-#remarques/questions:
+#remarques:
 -fuji: angle de 150° mieux que 135 car la fibre est mal positionné.
--on a pas fait de débruitages globales, quand on remarque l'etat de l'art, c'est bcp mieux...
--seuil zones du milieu: marche pas super bien parce que yen est adpaté à la zone de la fibre
+- yen est adpaté à la zone de la fibre
 -lire papier de yen: compliqué...
--est ce que je selectionne la composante connexe la plus grosse (pb résidu avec yen) non
 
 
--tests de segmentation dice
--canal vert = segm
--canal rouge= mask
--jouer sur longueru LxLy dans corrélation
--spacing seb
 """
 
 import skimage 
