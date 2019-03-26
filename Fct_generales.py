@@ -6,6 +6,8 @@ Created on Sat Jan 19 11:12:27 2019
 
 
 """
+import random
+
 
 import numpy as np
 import skimage
@@ -127,26 +129,30 @@ def correlation_mask_I(im, Lx, Ly, angle=45, option=True):
 #    plt.imshow(mask, cmap='gray')
 #    plt.title("mask")
 #    plt.show()
+    
     corr_mask=signal.correlate(im, mask, mode='same')
+
+    
 #    max_corr_mask=np.max(corr_mask)
 #    min_corr_mask=np.min(corr_mask)
 #    y, x = np.histogram(corr_mask, bins=np.arange(min_corr_mask,max_corr_mask))
 #    fig, ax = plt.subplots()
 #    plt.plot(x[:-1], y)
 #    plt.show()
-    
+##    
     skimage.filters.try_all_threshold(corr_mask)
     if option:
         seuil=skimage.filters.threshold_yen(corr_mask)
     else:
         seuil=skimage.filters.threshold_otsu(corr_mask)
+
     plt.figure()
     plt.imshow(corr_mask, cmap='gray')
     plt.show()
     im_corr=corr_mask>seuil
-    plt.figure()
-    plt.imshow(im_corr, cmap='gray')
-    plt.show()
+#    plt.figure()
+#    plt.imshow(im_corr, cmap='gray')
+#    plt.show()
     
     return(im_corr)
     
@@ -313,3 +319,64 @@ pipeline :
     return(im_segmentation, im_mask, mesures)
 
 
+def pipeline_toute_fibre(im,  im_mask, zone_fibre_n=[0.12,0.42], zone_fibre_p=[0.295,0.82]):
+
+    
+    #test inversion
+    [n,p]=np.shape(im)
+    if np.mean(im[n//2-10:n//2+10 , 0:20]) > np.mean(im[n//2-10:n//2+10 , p-21:p-1]) :
+        im=-im+np.max(im)
+        
+    #redim
+    [im_red, im_mask]=redim_im(im, im_mask)
+    [n,p]=np.shape(im_red)
+    #isolation zone fibres
+    [zone_fibres,im_mask]=isoler(im_red, im_mask, zone_fibre_n, zone_fibre_p) 
+    
+    #on brouille les endroits hors zones avec du bruit
+    [zone_bruit,m]=isoler(zone_fibres, np.zeros_like(zone_fibres),[0.25,0.75], [0.2,0.8])
+    moy_bruit=np.mean(zone_bruit)
+    zone_fibres_ravel=np.ravel(zone_bruit)
+    [n,p]=np.shape(zone_fibres)
+    for i in range(n):
+        for j in range(p):
+            if (-i)>(-320 +(340/370)*j) or (-i)<((n-470)/(p-350)*j-740) :  #faire 320/n0 *n
+                zone_fibres[i,j]=random.choice(zone_fibres_ravel)
+                
+    #égalisation d'histogramme            
+    zone_fibres=equalize_adapthist(zone_fibres)
+    
+    #filtrage bilinéaire 
+    denoised = denoise_bilateral(zone_fibres,win_size=3, sigma_color=moy_bruit, sigma_spatial=4, multichannel=False)
+    
+    #filtrage apsse haut
+    fftc_highpass=highpass_filter(denoised,Dc=10)
+    fft_highpass=np.fft.ifftshift(fftc_highpass)
+    invfft_highpass=np.real(np.fft.ifft2(fft_highpass))
+        
+    #on rajoute du bruit car le traitement réhausse la séparation entre le bruit que l'on a rajouté et la zone des fibres
+    [zone_bruit,m]=isoler(invfft_highpass, np.zeros_like(invfft_highpass),[0.5,0.6], [0.5,0.6])
+    moy_bruit=np.mean(zone_bruit)
+    zone_bruit_ravel=np.ravel(zone_bruit)
+    [n,p]=np.shape(zone_fibres)
+    for i in range(n):
+        for j in range(p):
+            if (-i)>(-340 +(340/370)*j) or (-i)<((n-470)/(p-350)*j-740) : 
+                invfft_highpass[i,j]=random.choice(zone_bruit_ravel)
+
+    #filtre nl mean
+    im_filtree=skimage.restoration.denoise_nl_means(invfft_highpass, patch_distance=2)
+    
+    #corrélation
+    im_corr_I1=correlation_mask_I(im_filtree,3,50, angle=45, option=False) 
+    im_corr_I2=correlation_mask_I(im_filtree,3,50, angle=135, option=False) 
+    
+    #résultat
+    im_segmentation= (im_corr_I1+im_corr_I2)
+    im_segmentation=im_segmentation.astype('float32')
+    plt.figure()
+    plt.imshow(im_segmentation+im_mask, cmap='gray')
+    plt.show()
+    
+    mesures=resultat(im_segmentation, im_mask)
+    return(im_segmentation, im_mask, mesures)
