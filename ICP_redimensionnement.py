@@ -4,10 +4,7 @@ Created on Sat Mar  9 18:37:08 2019
 
 @author: Gauthier Frecon
 
-on ne voit pas les zones de repere à tester
 
-
-tester d'abotd avec n=billes et carres
 """
 
 import ICP
