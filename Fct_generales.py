@@ -74,6 +74,12 @@ def linear (source, a, b): #entrée: image 2D, sortie: image ou les pixels d'int
 #                I[k][l]=0
     return(I)
 
+def rgb2gray(rgb):
+
+    r, g, b = rgb[:,:,0], rgb[:,:,1], rgb[:,:,2]
+    gray = 0.2989 * r + 0.5870 * g + 0.1140 * b
+
+    return gray
 
 def highpass_filter(im, Dc, option=True): #filtre passe haut de fréaquence de coupure Dc, gaussiien si option=true
     
@@ -125,11 +131,11 @@ def correlation_mask_I(im, Lx, Ly, angle=45, option=True):
     mask[n//2-Lx:n//2+Lx,p//2-Ly:p//2+Ly]=np.ones([2*Lx,2*Ly])
     mask=rotate(mask, angle)
     mask[0,0]=np.max(mask)*np.ones([1,1])
-#    plt.figure(1)
+#    plt.figure()
 #    plt.imshow(mask, cmap='gray')
 #    plt.title("mask")
 #    plt.show()
-    
+#    
     corr_mask=signal.correlate(im, mask, mode='same')
 
     
@@ -148,6 +154,7 @@ def correlation_mask_I(im, Lx, Ly, angle=45, option=True):
 
     plt.figure()
     plt.imshow(corr_mask, cmap='gray')
+    plt.title("image corrélée")
     plt.show()
     im_corr=corr_mask>seuil
 #    plt.figure()
@@ -266,8 +273,9 @@ pipeline :
 -redimension
 -isolement des fibres
 -equalize adapthist
+-bilinéaire
 -filtrage passe haut pour enlever le gradient
--filtre median et non local mean
+-non local mean
 -corrélation des deux mask
 -OU logique
 
@@ -281,29 +289,43 @@ pipeline :
     if np.mean(im[n//2-10:n//2+10 , 0:20]) > np.mean(im[n//2-10:n//2+10 , p-21:p-1]) :
         im=-im+np.max(im)
         
-    #redim
+    #redimension
     [im_red, im_mask]=redim_im(im, im_mask)
     [n,p]=np.shape(im_red)
 
-    #isolement fibre f1
-    
+    #isolement fibre     
     [fibre, im_mask]=isoler(im_red,im_mask, zone_fibre_n, zone_fibre_p)           
-
+    plt.figure()
+    plt.imshow(fibre, cmap='gray')
+    plt.title("Image originale")
+    plt.show()
   
-    # traitement fibre 
-
+    # egalisation histogramme
     fibre=equalize_adapthist(fibre)
-    
-    zone_bruit=isoler(fibre, np.zeros_like(fibre),[0,0.1], [0,0.1])
+#    plt.figure()
+#    plt.imshow(fibre, cmap='gray')
+#    plt.title("egalisation d'histogramme")
+#    plt.show()
+      
+    #bilineaire
+    zone_bruit, m=isoler(fibre, np.zeros_like(fibre),[0,0.1], [0,0.1])
     moy_bruit =np.mean(zone_bruit)
     denoised = denoise_bilateral(fibre,win_size=3, sigma_color=moy_bruit, sigma_spatial=4, multichannel=False)
- 
+#    plt.figure()
+#    plt.imshow(fibre, cmap='gray')
+#    plt.title("filtrage bilinéaire")
+#    plt.show() 
+    
+    #passe-haut
     fftc_highpass=highpass_filter(denoised,Dc=3)
     fft_highpass=np.fft.ifftshift(fftc_highpass)
     invfft_highpass=np.real(np.fft.ifft2(fft_highpass))
+    
+    #non local mean
     im_filtree=skimage.restoration.denoise_nl_means(invfft_highpass)
     plt.figure()
     plt.imshow(im_filtree, cmap='gray')
+    plt.title("fin de filtrage")
     plt.show()
     
     #corrélation
@@ -311,16 +333,47 @@ pipeline :
     im_corr_I2=correlation_mask_I(im_filtree,5,40, angle=135) #4,20, seuil=193, angle=135)
     im_segmentation= (im_corr_I1+im_corr_I2)
     im_segmentation=im_segmentation.astype('float32')
+    
     plt.figure()
-    plt.imshow(im_segmentation+im_mask, cmap='gray')
+    plt.imshow(im_segmentation, cmap='gray')
+    plt.title("segmentation")
+    plt.show()
+    
+    [n,p]=np.shape(im_segmentation)
+    comparaison=np.ones((n,p,3))
+    comparaison[:,:,0]=im_mask
+    comparaison[:,:,1]=im_segmentation
+    
+    plt.figure()
+    plt.imshow(rgb2gray(comparaison))
+    plt.title("comparaison")
     plt.show()
     
     mesures=resultat(im_segmentation, im_mask)
     return(im_segmentation, im_mask, mesures)
 
 
-def pipeline_toute_fibre(im,  im_mask, zone_fibre_n=[0.12,0.42], zone_fibre_p=[0.295,0.82]):
 
+def pipeline_toute_fibre(im,  im_mask, option=True, zone_fibre_n=[0.11,0.42], zone_fibre_p=[0.295,0.82]):
+    '''segmente la zone des fibres
+
+
+pipeline :
+
+-inversion si nécessaire
+-redimension
+-isolement des fibres
+-equalize adapthist
+-bilinéaire
+-filtrage passe haut pour enlever le gradient
+-non local mean
+-corrélation des deux mask
+-OU logique
+
+    '''
+    
+
+    
     
     #test inversion
     [n,p]=np.shape(im)
@@ -330,26 +383,39 @@ def pipeline_toute_fibre(im,  im_mask, zone_fibre_n=[0.12,0.42], zone_fibre_p=[0
     #redim
     [im_red, im_mask]=redim_im(im, im_mask)
     [n,p]=np.shape(im_red)
+    
     #isolation zone fibres
     [zone_fibres,im_mask]=isoler(im_red, im_mask, zone_fibre_n, zone_fibre_p) 
     
-    #on brouille les endroits hors zones avec du bruit
+    plt.figure()
+    plt.imshow(equalize_adapthist(zone_fibres), cmap="gray")
+    plt.title("zone fibres")
+    plt.show()
+    
+    
+    #on brouille les endroits hors zones avec du   648 636  
     [zone_bruit,m]=isoler(zone_fibres, np.zeros_like(zone_fibres),[0.25,0.75], [0.2,0.8])
     moy_bruit=np.mean(zone_bruit)
     zone_fibres_ravel=np.ravel(zone_bruit)
     [n,p]=np.shape(zone_fibres)
+    print(n,p)
     for i in range(n):
         for j in range(p):
-            if (-i)>(-320 +(340/370)*j) or (-i)<((n-470)/(p-350)*j-740) :  #faire 320/n0 *n
+            if (-i) > ( -0.48*n + 0.92*j ) or (-i) < ( - 1.4*n  + 0.92*j ) :  # if (-i)>(-320 +(340/370)*j) or (-i)<((n-470)/(p-350)*j-740)
                 zone_fibres[i,j]=random.choice(zone_fibres_ravel)
+             
+                
+#( -320*n/648 + (340/370)*j ) or (-i) < ( (n-470*n/648)/(p-350*p/636)*j - 740*n/648 ) 
+
                 
     #égalisation d'histogramme            
     zone_fibres=equalize_adapthist(zone_fibres)
     
+
     #filtrage bilinéaire 
     denoised = denoise_bilateral(zone_fibres,win_size=3, sigma_color=moy_bruit, sigma_spatial=4, multichannel=False)
     
-    #filtrage apsse haut
+    #filtrage passe haut
     fftc_highpass=highpass_filter(denoised,Dc=10)
     fft_highpass=np.fft.ifftshift(fftc_highpass)
     invfft_highpass=np.real(np.fft.ifft2(fft_highpass))
@@ -359,23 +425,39 @@ def pipeline_toute_fibre(im,  im_mask, zone_fibre_n=[0.12,0.42], zone_fibre_p=[0
     moy_bruit=np.mean(zone_bruit)
     zone_bruit_ravel=np.ravel(zone_bruit)
     [n,p]=np.shape(zone_fibres)
+#    for i in range(n):
+#        for j in range(p):
+#            if (-i)>(-340 +(340/370)*j) or (-i)<((n-470)/(p-350)*j-740) : 
     for i in range(n):
         for j in range(p):
-            if (-i)>(-340 +(340/370)*j) or (-i)<((n-470)/(p-350)*j-740) : 
+            if (-i) > ( -0.54*n + 0.92*j ) or (-i) < ( - 1.3*n  + 0.92*j ) :
                 invfft_highpass[i,j]=random.choice(zone_bruit_ravel)
 
     #filtre nl mean
     im_filtree=skimage.restoration.denoise_nl_means(invfft_highpass, patch_distance=2)
     
     #corrélation
-    im_corr_I1=correlation_mask_I(im_filtree,3,50, angle=45, option=False) 
-    im_corr_I2=correlation_mask_I(im_filtree,3,50, angle=135, option=False) 
-    
+
+    im_corr_I1=correlation_mask_I(im_filtree,3,50, 45, option) 
+    im_corr_I2=correlation_mask_I(im_filtree,3,50, 135, option) 
+        
     #résultat
     im_segmentation= (im_corr_I1+im_corr_I2)
     im_segmentation=im_segmentation.astype('float32')
+    
     plt.figure()
-    plt.imshow(im_segmentation+im_mask, cmap='gray')
+    plt.imshow(im_segmentation)
+    plt.title("segmentation fibres")
+    plt.show()
+    
+    [n,p]=np.shape(im_segmentation)
+    comparaison=np.ones((n,p,3))
+    comparaison[:,:,0]=im_mask
+    comparaison[:,:,1]=im_segmentation
+       
+    plt.figure()
+    plt.imshow(rgb2gray(comparaison))
+    plt.title("comparaison")
     plt.show()
     
     mesures=resultat(im_segmentation, im_mask)
