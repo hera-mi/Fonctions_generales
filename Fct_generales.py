@@ -7,8 +7,6 @@ Created on Sat Jan 19 11:12:27 2019
 
 """
 import random
-
-
 import numpy as np
 import skimage
 from skimage.transform import rotate
@@ -75,7 +73,10 @@ def linear (source, a, b): #entrée: image 2D, sortie: image ou les pixels d'int
     return(I)
 
 def rgb2gray(rgb):
-
+    '''
+entrée: image RGB
+sortie: Image niveau de gris
+    '''
     r, g, b = rgb[:,:,0], rgb[:,:,1], rgb[:,:,2]
     gray = 0.2989 * r + 0.5870 * g + 0.1140 * b
 
@@ -124,12 +125,17 @@ def meanKernel(hs):
     return kernel
  
 def correlation_mask_I(im, Lx, Ly, angle=45, option=True):
-    ''' correlation de l'image avec un mask en I de taille 2*Lx   * 2*Ly puis seuillage à seuil'''
+    '''
+        correlation de l'image (array) avec un mask en I de taille 2*Lx * 2*Ly orienté avec un angle de valeur angle
+        sortie: tableau de booléen issu de la correlation seuillé
+        option = True : seuil de yen, option=False: seuil d'Otsu
+        
+    '''
     
-    mask=np.zeros_like(im) #prendre la shape et enlever les 122
+    mask=np.zeros_like(im) 
     [n,p]=np.shape(mask)
     mask[n//2-Lx:n//2+Lx,p//2-Ly:p//2+Ly]=np.ones([2*Lx,2*Ly])
-    mask=rotate(mask, angle)
+    mask=rotate(mask, angle) 
     mask[0,0]=np.max(mask)*np.ones([1,1])
 #    plt.figure()
 #    plt.imshow(mask, cmap='gray')
@@ -138,14 +144,13 @@ def correlation_mask_I(im, Lx, Ly, angle=45, option=True):
 #    
     corr_mask=signal.correlate(im, mask, mode='same')
 
-    
 #    max_corr_mask=np.max(corr_mask)
 #    min_corr_mask=np.min(corr_mask)
 #    y, x = np.histogram(corr_mask, bins=np.arange(min_corr_mask,max_corr_mask))
 #    fig, ax = plt.subplots()
 #    plt.plot(x[:-1], y)
 #    plt.show()
-##    
+
     skimage.filters.try_all_threshold(corr_mask)
     if option:
         seuil=skimage.filters.threshold_yen(corr_mask)
@@ -165,6 +170,12 @@ def correlation_mask_I(im, Lx, Ly, angle=45, option=True):
     
     
 def redim_im(im, im_mask):
+    '''
+    entrée: image du phantom et mask du phantom (array 2D)
+    traitment: détection de la position du sein selon x et y
+    sortie: image du phantom et mask coupé (array 2D) pour ne garder que la partie de l'image ou se trouve le sein (on enleve les bandes noires)
+    
+    '''
     
     [n,p]=np.shape(im)
     #détection de la posistion du sein selon y (vertical)
@@ -216,7 +227,14 @@ def redim_im_bis(im,mask):
         yd-=1
     return (im[:,yg:yd],mask[:,yg:yd])
 
+
 def resultat(im_segmentation, im_mask):
+    '''
+    entrée: image_segmentée et mask initial  (array 2D)
+    traitement: calcul des TP, FP, TN,...
+    sortie: dictionnaire measure qui contient les mesures classiques (dice, accuracy...)
+    
+    '''
     #analyse
     eps = 1e-12
     measures=dict()
@@ -266,10 +284,12 @@ def resultat(im_segmentation, im_mask):
     
     
 def pipeline_segm_fibre(im,  im_mask, zone_fibre_n=[0.12,0.22], zone_fibre_p=[0.70,0.85]):
-    '''segmente la fibres issue de zone_fibre, entée =image d'un fichier dicom   
+    '''entée =image array 2D, image du mask correspondant, délimitation zone à segmenter (adapté à une seule fibre)
+
+traitement: segmente la fibres issue de la zone délimitée par zone_fibre_n (lignes) et zone_fibre_p (colonne)
 pipeline :
 
--inversion si nécessaire
+-inversion de la valeur des pixels si nécessaire (fibres en blance, fond en noir)
 -redimension
 -isolement des fibres
 -equalize adapthist
@@ -279,8 +299,7 @@ pipeline :
 -corrélation des deux mask
 -OU logique
 
-    
-
+sortie: array correspondant à l'image segmentée, array du mask correspondant, dictionnaire measures (voir fct resultats)
 
     '''
 
@@ -355,20 +374,25 @@ pipeline :
 
 
 def pipeline_toute_fibre(im,  im_mask, option=True, zone_fibre_n=[0.11,0.42], zone_fibre_p=[0.295,0.82]):
-    '''segmente la zone des fibres
+    '''entée =image array 2D, image du mask correspondant, délimitation zone à segmenter (adapté à la zone des fibres entières)
 
+traitement: segmente la zone des fibres issue de la zone délimitée par zone_fibre_n (lignes) et zone_fibre_p (colonne)
 
 pipeline :
 
 -inversion si nécessaire
 -redimension
 -isolement des fibres
+-on brouille les endroits hors zones avec du bruit issue de la zone des fibres 
 -equalize adapthist
 -bilinéaire
 -filtrage passe haut pour enlever le gradient
 -non local mean
 -corrélation des deux mask
 -OU logique
+
+sortie: array correspondant à l'image segmentée, array du mask correspondant, dictionnaire measures (voir fct resultats)
+
 
     '''
     
@@ -380,7 +404,7 @@ pipeline :
     if np.mean(im[n//2-10:n//2+10 , 0:20]) > np.mean(im[n//2-10:n//2+10 , p-21:p-1]) :
         im=-im+np.max(im)
         
-    #redim
+    #redimensionnement 
     [im_red, im_mask]=redim_im(im, im_mask)
     [n,p]=np.shape(im_red)
     
@@ -393,7 +417,7 @@ pipeline :
     plt.show()
     
     
-    #on brouille les endroits hors zones avec du   648 636  
+    #on brouille les endroits hors zones avec du bruit issue de la zone des fibres 
     [zone_bruit,m]=isoler(zone_fibres, np.zeros_like(zone_fibres),[0.25,0.75], [0.2,0.8])
     moy_bruit=np.mean(zone_bruit)
     zone_fibres_ravel=np.ravel(zone_bruit)
@@ -401,12 +425,10 @@ pipeline :
     print(n,p)
     for i in range(n):
         for j in range(p):
-            if (-i) > ( -0.48*n + 0.92*j ) or (-i) < ( - 1.4*n  + 0.92*j ) :  # if (-i)>(-320 +(340/370)*j) or (-i)<((n-470)/(p-350)*j-740)
+            if (-i) > ( -0.48*n + 0.92*j ) or (-i) < ( - 1.4*n  + 0.92*j ) :   #équations des deux droites qui délimitent la zone des fibres après l'isoaltion de la zone
                 zone_fibres[i,j]=random.choice(zone_fibres_ravel)
              
                 
-#( -320*n/648 + (340/370)*j ) or (-i) < ( (n-470*n/648)/(p-350*p/636)*j - 740*n/648 ) 
-
                 
     #égalisation d'histogramme            
     zone_fibres=equalize_adapthist(zone_fibres)
@@ -421,16 +443,14 @@ pipeline :
     invfft_highpass=np.real(np.fft.ifft2(fft_highpass))
         
     #on rajoute du bruit car le traitement réhausse la séparation entre le bruit que l'on a rajouté et la zone des fibres
+    #on "baisse" la droite du haute et on "monte" la droite du bas pour réduire la zone des fibres: règle le problème de bord 
     [zone_bruit,m]=isoler(invfft_highpass, np.zeros_like(invfft_highpass),[0.5,0.6], [0.5,0.6])
     moy_bruit=np.mean(zone_bruit)
     zone_bruit_ravel=np.ravel(zone_bruit)
     [n,p]=np.shape(zone_fibres)
-#    for i in range(n):
-#        for j in range(p):
-#            if (-i)>(-340 +(340/370)*j) or (-i)<((n-470)/(p-350)*j-740) : 
     for i in range(n):
         for j in range(p):
-            if (-i) > ( -0.54*n + 0.92*j ) or (-i) < ( - 1.3*n  + 0.92*j ) :
+            if (-i) > ( -0.54*n + 0.92*j ) or (-i) < ( - 1.3*n  + 0.92*j ) : 
                 invfft_highpass[i,j]=random.choice(zone_bruit_ravel)
 
     #filtre nl mean
