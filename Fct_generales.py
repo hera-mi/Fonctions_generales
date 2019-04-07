@@ -296,10 +296,11 @@ pipeline :
 -bilinéaire
 -filtrage passe haut pour enlever le gradient
 -non local mean
--corrélation des deux mask
+-corrélation de l’image filtrée avec les deux masques en branche I
 -OU logique
+-Evaluation des résultats
 
-sortie: array correspondant à l'image segmentée, array du mask correspondant, dictionnaire measures (voir fct resultats)
+sortie: array correspondant à l'image segmentée, array du mask correspondant, dictionnaire measures (voir fct resultat)
 
     '''
 
@@ -387,6 +388,7 @@ pipeline :
 -equalize adapthist
 -bilinéaire
 -filtrage passe haut pour enlever le gradient
+-on brouille une seconde fois les endroits hors zones avec du bruit issue de la zone des fibres
 -non local mean
 -corrélation des deux mask
 -OU logique
@@ -427,7 +429,12 @@ sortie: array correspondant à l'image segmentée, array du mask correspondant, 
         for j in range(p):
             if (-i) > ( -0.48*n + 0.92*j ) or (-i) < ( - 1.4*n  + 0.92*j ) :   #équations des deux droites qui délimitent la zone des fibres après l'isoaltion de la zone
                 zone_fibres[i,j]=random.choice(zone_fibres_ravel)
-             
+                
+    plt.figure()
+    plt.imshow(zone_fibres, cmap="gray")
+    plt.title("zone fibres avec ajout de bruit")
+    plt.show()
+                 
                 
                 
     #égalisation d'histogramme            
