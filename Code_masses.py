@@ -99,7 +99,7 @@ patch_kw = dict(patch_size=5,      # 5x5 patches
                 patch_distance=6,  # 13x13 search area
                 multichannel=True)
 
-def pipeline_finale(taille_masse=0.75):
+def pipeline_finale(taille_masse=0.85):
     D4=round(taille_masse/im4.ImagerPixelSpacing[0])
     #On fixe le bon rayon à avoir pour im4, et ensuite on ajuste les autres proportionellement au carré
     #du rapport des pixels, parceque l'on considère des volumes
